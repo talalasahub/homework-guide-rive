@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>دليل الواجب - المدرس الذكي (Impossible UI with Rive)</title>
+    <title>دليل الواجب - المدرس الذكي (Impossible UI)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://unpkg.com/@rive-app/canvas@2.15.3"></script>
     <style>
-        /* نفس الأنماط السابقة مع تعديل تخطيط حقل السؤال */
         :root {
             --primary-green: #2ecc71;
             --dark-green: #27ae60;
@@ -22,13 +20,12 @@
             --text-dark: #2c3e50;
             --text-light: #7f8c8d;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
             margin: 0; padding: 10px; text-align: center; min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
-            position: relative; transition: background 0.3s;
         }
         body.animations-enabled {
             background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
@@ -39,67 +36,7 @@
             50% { background: linear-gradient(135deg, #d5f5e3 0%, #b8e0b9 100%); }
             100% { background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); }
         }
-        .container { max-width: 950px; width: 100%; margin: 0 auto; background: var(--white); padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(46, 204, 113, 0.2); border: 2px solid var(--primary-green); }
-        .character-area { text-align: center; margin-bottom: 10px; }
-        .question-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .question-row textarea {
-            flex: 1;
-            margin: 0;
-        }
-        .character-side {
-            width: 180px;
-            text-align: center;
-        }
-        #riveCharacter { width: 150px; height: 150px; cursor: pointer; transition: transform 0.2s; }
-        .speech-bubble {
-            position: relative;
-            background: #fff9c4;
-            border-radius: 20px;
-            padding: 12px 20px;
-            margin: 10px auto 20px;
-            max-width: 80%;
-            text-align: center;
-            font-size: 1rem;
-            font-weight: bold;
-            color: #7d4d00;
-            border: 2px solid #ffc107;
-            opacity: 0;
-            transform: scale(0.8);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-        }
-        .speech-bubble.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-        .speech-bubble:after {
-            content: '';
-            position: absolute;
-            bottom: -15px;
-            right: 30px;
-            border-width: 15px 15px 0 0;
-            border-style: solid;
-            border-color: #ffc107 transparent transparent transparent;
-        }
-        .toggle-effects {
-            background: #f39c12;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 6px 15px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            margin-bottom: 15px;
-            transition: 0.2s;
-        }
-        .toggle-effects:hover { background: #e67e22; }
-        /* باقي الأنماط مشتقة من السابق، اختصاراً */
+        .container { max-width: 950px; width: 100%; margin: 0 auto; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(46, 204, 113, 0.2); border: 2px solid var(--primary-green); }
         .header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; background: var(--light-green); padding: 12px 15px; border-radius: 50px; border: 2px solid var(--primary-green); }
         h1 { color: var(--dark-green); margin: 0; font-size: 2rem; }
         .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -111,7 +48,9 @@
         .settings-panel.visible { display: block; }
         .settings-panel input, .settings-panel select { padding: 12px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 14px; margin: 5px 0; width: 100%; background: white; }
         .credit-counter { background: var(--light-green); border-right: 4px solid var(--primary-green); padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--dark-green); }
-        .welcome-message { background: var(--light-green); border-right: 4px solid var(--primary-green); padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; font-size: 1.1rem; color: var(--dark-green); animation: fadeIn 0.5s; }
+        .welcome-message { background: var(--light-green); border-right: 4px solid var(--primary-green); padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; font-size: 1.1rem; color: var(--dark-green); }
+        .question-area { margin-bottom: 15px; }
+        textarea { width: 100%; padding: 15px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 16px; resize: vertical; background: var(--soft-white); }
         .file-area { display: flex; align-items: center; gap: 10px; margin: 15px 0; flex-wrap: wrap; background: var(--light-green); padding: 10px; border-radius: 15px; }
         .custom-file-upload { background: var(--primary-green); color: white; padding: 12px 20px; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.3s; border: none; white-space: nowrap; }
         .custom-file-upload:hover { background: var(--dark-green); }
@@ -129,18 +68,70 @@
         .teacher { background: #e1f0fa; border-right: 4px solid var(--info-blue); margin-left: auto; flex-direction: row; }
         .student { background: var(--light-green); border-left: 4px solid var(--primary-green); margin-right: auto; flex-direction: row-reverse; }
         .avatar { width: 50px; height: 50px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); flex-shrink: 0; }
-        .avatar canvas { width: 45px; height: 45px; }
+        .avatar svg { width: 90%; height: 90%; }
         .message-content { flex: 1; font-size: 1rem; }
         .tip-box { background: var(--warning-yellow); border-right: 4px solid var(--warning-border); padding: 15px; border-radius: 15px; margin: 20px 0 10px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .tip-avatar { width: 70px; height: 70px; border-radius: 50%; background: #ffecb3; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .student-input-area { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .student-input-area input { flex: 1 1 200px; padding: 14px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 16px; background: var(--soft-white); min-width: 150px; }
+        .character-area {
+            text-align: center;
+            margin: 15px 0 10px;
+        }
+        #riveCharacter {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .speech-bubble {
+            position: relative;
+            background: #fff9c4;
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin: 10px auto;
+            max-width: 85%;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #7d4d00;
+            border: 2px solid #ffc107;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+        .speech-bubble.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            right: 20px;
+            border-width: 12px 12px 0 0;
+            border-style: solid;
+            border-color: #ffc107 transparent transparent transparent;
+        }
+        .toggle-effects {
+            background: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 6px 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
         .footer-links { margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         .footer-links a { display: inline-block; padding: 10px 20px; border-radius: 50px; font-size: 1rem; font-weight: bold; text-decoration: none; transition: all 0.3s; border: 2px solid var(--primary-green); background: var(--white); color: var(--dark-green); }
         .footer-links a:hover { background: var(--light-green); transform: translateY(-2px); }
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-green); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 600px) { .container { padding: 15px; } .question-row { flex-direction: column; } .character-side { width: 100%; } .button-group button { width: 100%; } .student-input-area button { width: 100%; } }
+        @media (max-width: 600px) { .container { padding: 15px; } .button-group button { width: 100%; } .student-input-area button { width: 100%; } #riveCharacter { width: 90px; height: 90px; } }
     </style>
 </head>
 <body>
@@ -173,13 +164,8 @@
 
     <div id="welcomeMessage" class="welcome-message"></div>
 
-    <!-- حقل السؤال مع الشخصية بجانبه -->
-    <div class="question-row">
+    <div class="question-area">
         <textarea id="questionInput" rows="3" placeholder="اكتب سؤالك هنا ..."></textarea>
-        <div class="character-side">
-            <canvas id="riveCharacter" width="150" height="150" style="width:150px; height:150px;"></canvas>
-            <div id="speechBubble" class="speech-bubble"></div>
-        </div>
     </div>
 
     <div class="file-area">
@@ -193,8 +179,21 @@
         <button onclick="resetConversation()" id="resetBtn">🔄 بداية جديدة</button>
     </div>
 
-    <div class="chat-box" id="chatBox" style="display: none;"><div id="messages"></div></div>
-    <div id="tipContainer" class="tip-box" style="display: none;"><div id="tipAvatar" class="tip-avatar"></div><div class="tip-text"><span id="tipText"></span></div></div>
+    <div class="chat-box" id="chatBox" style="display: none;">
+        <div id="messages"></div>
+    </div>
+
+    <!-- الشخصية والفقاعة توضعان هنا أسفل المحادثة وفوق حقل الإجابة -->
+    <div class="character-area">
+        <canvas id="riveCharacter" width="120" height="120" style="width:120px; height:120px;"></canvas>
+        <div id="speechBubble" class="speech-bubble"></div>
+    </div>
+
+    <div id="tipContainer" class="tip-box" style="display: none;">
+        <div id="tipAvatar" class="tip-avatar"></div>
+        <div class="tip-text"><span id="tipText"></span></div>
+    </div>
+
     <div id="studentArea" style="display: none;" class="student-input-area">
         <input type="text" id="studentAnswer" placeholder="اكتب إجابتك هنا...">
         <button onclick="sendStudentAnswer()" id="sendBtn">إرسال إجابتي</button>
@@ -210,7 +209,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.0/dist/tesseract.min.js"></script>
 
 <script>
-    // ---------- عناصر الصفحة الأساسية ----------
+    // عناصر الصفحة
     const apiKeyInput = document.getElementById('apiKeyInput');
     const modelSelect = document.getElementById('modelSelect');
     const languageSelect = document.getElementById('languageSelect');
@@ -245,92 +244,85 @@
     let creditTimer = null;
     let conversationHistory = [];
     let currentQuestion = '';
-    let riveInstance = null;
-    let teacherRive = null;    // لشخصية المعلم في الرسائل (اختياري)
-    let studentRive = null;
 
-    // ---------- Rive Canvas Integration (شخصية بومة/مرشد) ----------
-    // رابط ملف Rive حقيقي (Smart Cat كمثال، يمكن استبداله بملف owl)
-    const RIVE_FILE_URL = 'https://cdn.rive.app/animations/vehicles.riv'; // هذا ليس بشخصية لكنه يعمل – نفضل استخدام رابط حقيقي
-    // للاختبار الفعلي، ننصح بتحميل ملف من community واستبدال الرابط
-    // بديل مؤقت: سنستخدم رسمًا يدويًا لضمان العمل، لأن ملف rive قد لا يحتوي على الحالات المطلوبة.
-    // لذلك سنعتمد بشكل أساسي على الرسم اليدوي (الذي يعمل بالفعل) مع إضافة دالة Rive اختيارية.
-
-    // دالة الرسم اليدوي (تعمل 100% بدون إنترنت)
-    function drawManualOwl(expression = 'normal') {
+    // رسم شخصية البومة يدويًا (بديل موثوق لـ Rive)
+    function drawOwl(expression = 'normal') {
         const canvas = document.getElementById('riveCharacter');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        canvas.width = 150; canvas.height = 150;
-        ctx.clearRect(0, 0, 150, 150);
+        canvas.width = 120; canvas.height = 120;
+        ctx.clearRect(0, 0, 120, 120);
         // الجسم
         ctx.fillStyle = '#8B5A2B';
         ctx.beginPath();
-        ctx.ellipse(75, 85, 40, 50, 0, 0, 2 * Math.PI);
+        ctx.ellipse(60, 70, 30, 40, 0, 0, 2 * Math.PI);
         ctx.fill();
         // الرأس
         ctx.fillStyle = '#A0522D';
         ctx.beginPath();
-        ctx.ellipse(75, 60, 35, 40, 0, 0, 2 * Math.PI);
+        ctx.ellipse(60, 50, 28, 32, 0, 0, 2 * Math.PI);
         ctx.fill();
         // العيون
         ctx.fillStyle = 'white';
         ctx.beginPath();
-        ctx.arc(55, 50, 10, 0, 2 * Math.PI);
-        ctx.arc(95, 50, 10, 0, 2 * Math.PI);
+        ctx.arc(45, 42, 8, 0, 2 * Math.PI);
+        ctx.arc(75, 42, 8, 0, 2 * Math.PI);
         ctx.fill();
         ctx.fillStyle = 'black';
         if (expression === 'thinking') {
             ctx.beginPath();
-            ctx.arc(52, 48, 4, 0, 2 * Math.PI);
-            ctx.arc(92, 48, 4, 0, 2 * Math.PI);
+            ctx.arc(42, 40, 3, 0, 2 * Math.PI);
+            ctx.arc(72, 40, 3, 0, 2 * Math.PI);
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(45, 38);
-            ctx.lineTo(65, 42);
-            ctx.moveTo(105, 38);
-            ctx.lineTo(85, 42);
-            ctx.lineWidth = 4;
+            ctx.moveTo(38, 32);
+            ctx.lineTo(52, 35);
+            ctx.moveTo(82, 32);
+            ctx.lineTo(68, 35);
+            ctx.lineWidth = 3;
             ctx.stroke();
         } else if (expression === 'happy') {
             ctx.beginPath();
-            ctx.arc(52, 45, 5, 0, 2 * Math.PI);
-            ctx.arc(92, 45, 5, 0, 2 * Math.PI);
+            ctx.arc(42, 38, 4, 0, 2 * Math.PI);
+            ctx.arc(72, 38, 4, 0, 2 * Math.PI);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(75, 65, 15, 0.1, Math.PI - 0.1);
+            ctx.arc(57, 55, 12, 0.1, Math.PI - 0.1);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(42, 40);
-            ctx.lineTo(62, 38);
-            ctx.moveTo(108, 40);
-            ctx.lineTo(88, 38);
+            ctx.moveTo(36, 32);
+            ctx.lineTo(48, 31);
+            ctx.moveTo(84, 32);
+            ctx.lineTo(72, 31);
             ctx.stroke();
             const elem = document.getElementById('riveCharacter');
-            elem.style.transform = 'translateY(-10px)';
+            elem.style.transform = 'translateY(-6px)';
             setTimeout(() => elem.style.transform = '', 400);
         } else if (expression === 'nod') {
+            ctx.beginPath();
+            ctx.arc(45, 42, 4, 0, 2 * Math.PI);
+            ctx.arc(75, 42, 4, 0, 2 * Math.PI);
+            ctx.fill();
             const elem = document.getElementById('riveCharacter');
-            elem.style.transform = 'rotate(8deg)';
+            elem.style.transform = 'rotate(6deg)';
             setTimeout(() => elem.style.transform = '', 200);
         } else {
             ctx.beginPath();
-            ctx.arc(55, 50, 5, 0, 2 * Math.PI);
-            ctx.arc(95, 50, 5, 0, 2 * Math.PI);
+            ctx.arc(45, 42, 4, 0, 2 * Math.PI);
+            ctx.arc(75, 42, 4, 0, 2 * Math.PI);
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(45, 42);
-            ctx.lineTo(65, 40);
-            ctx.moveTo(105, 42);
-            ctx.lineTo(85, 40);
+            ctx.moveTo(38, 36);
+            ctx.lineTo(52, 34);
+            ctx.moveTo(82, 36);
+            ctx.lineTo(68, 34);
             ctx.stroke();
         }
     }
 
-    // دالة التحكم في الشخصية (موحدة)
     window.updateCharacter = (action) => {
         if (!effectsEnabled) return;
-        drawManualOwl(action); // استخدم الرسم اليدوي الموثوق
+        drawOwl(action);
     };
 
     function showSpeechBubble(message, duration = 3000) {
@@ -340,10 +332,9 @@
         setTimeout(() => speechBubbleDiv.classList.remove('visible'), duration);
     }
 
-    // تهيئة الشخصية
-    drawManualOwl('normal');
+    drawOwl('normal');
 
-    // ---------- عداد الرصيد ووظائف اللغة ----------
+    // عداد الرصيد
     function updateCreditDisplay() {
         const remaining = Math.max(0, MAX_REQUESTS_PER_MINUTE - requestCount);
         const lang = languageSelect.value;
@@ -355,9 +346,10 @@
     function resetRequestCount() { requestCount = 0; updateCreditDisplay(); }
     function startCreditTimer() { if (creditTimer) clearInterval(creditTimer); creditTimer = setInterval(resetRequestCount, 60000); }
     function incrementRequestCount() { requestCount++; updateCreditDisplay(); }
+
     settingsToggle.addEventListener('click', () => { settingsPanel.classList.toggle('visible'); });
 
-    // ---------- الترجمات (مختصرة لكنها كافية) ----------
+    // الترجمات
     const translations = {
         ar: { mainTitle: "🧑‍🏫 دليل الواجب", subTitle: "لا نعطيك الإجابة، نعلمك كيف تفكر!", welcome: "مرحباً ابني، اكتب أو صوّر المسألة التي صعُبت عليك في دروسك وسأدلك كيف تحلها", questionPlaceholder: "اكتب سؤالك هنا (رياضيات، علوم، تاريخ، لغة ...)", customFile: "📸 اختر صورة", startBtn: "🔍 ابدأ المحادثة", resetBtn: "🔄 بداية جديدة", studentAnswerPlaceholder: "اكتب إجابتك هنا...", sendBtn: "إرسال إجابتي", typing: "المدرس يكتب...", error: "خطأ", ocrStart: "🖼️ جاري استخراج النص من الصورة...", ocrProgress: "🖼️ التعرف على النص: ", ocrSuccess: "✅ تم استخراج النص بنجاح", ocrFail: "❌ فشل استخراج النص", error429: "لقد تجاوزت الحد المسموح من الطلبات. انتظر قليلاً.", error403: "المفتاح غير صالح. تأكد من صحة المفتاح.", noApiKey: "❌ الرجاء إدخال مفتاح API", noQuestion: "❌ الرجاء كتابة سؤال أو اختيار صورة", noAnswer: "الرجاء كتابة إجابتك أولاً.", helpLink: "📘 ❓ دليل الاستخدام (للأهل)", donateLink: "💖 دعم التطبيق (تبرع)" },
         en: { mainTitle: "🧑‍🏫 Homework Guide", subTitle: "We don't give you the answer, we teach you how to think!", welcome: "Hello my child, write or take a picture...", questionPlaceholder: "Write your question here (Math, Science, History...)", customFile: "📸 Choose image", startBtn: "🔍 Start conversation", resetBtn: "🔄 New start", studentAnswerPlaceholder: "Write your answer here...", sendBtn: "Send my answer", typing: "Teacher is typing...", error: "Error", ocrStart: "🖼️ Extracting text from image...", ocrProgress: "🖼️ Recognizing text: ", ocrSuccess: "✅ Text extracted successfully", ocrFail: "❌ Failed to extract text", error429: "Request limit exceeded. Please wait.", error403: "Invalid API key.", noApiKey: "❌ Please enter API key", noQuestion: "❌ Please write a question or choose an image", noAnswer: "Please write your answer first.", helpLink: "📘❓ User guide (for parents)", donateLink: "💖 Support the app (donate)" },
@@ -384,7 +376,7 @@
     languageSelect.addEventListener('change', updateUILanguage);
     window.addEventListener('load', () => { updateUILanguage(); startCreditTimer(); });
 
-    // ---------- دوال OCR ----------
+    // OCR
     async function extractTextFromImage(file, langCode) {
         const t = translations[languageSelect.value] || translations.ar;
         return new Promise((resolve, reject) => {
@@ -395,19 +387,16 @@
         });
     }
 
-    // شخصيات Rive للمعلم والطالب (نستخدم نفس الرسم اليدوي لاستهلاك أقل، لكن يمكن تطويرها)
-    function createTeacherAvatar() {}
-    function createStudentAvatar() {}
+    // شخصيات SVG للرسائل
+    const teacherSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="25" fill="#FFB6C1"/><circle cx="35" cy="35" r="4" fill="black"/><circle cx="65" cy="35" r="4" fill="black"/><path d="M40 50 Q50 60,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="65" width="20" height="25" fill="#4169E1" rx="5"/><circle cx="45" cy="90" r="6" fill="#8B4513"/><circle cx="55" cy="90" r="6" fill="#8B4513"/><rect x="25" y="55" width="50" height="8" fill="#CD853F" rx="4"/></svg>`;
+    const studentSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="22" fill="#FFD700"/><circle cx="38" cy="35" r="4" fill="black"/><circle cx="62" cy="35" r="4" fill="black"/><path d="M40 50 Q50 58,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="62" width="20" height="25" fill="#32CD32" rx="5"/><circle cx="45" cy="87" r="6" fill="#8B4513"/><circle cx="55" cy="87" r="6" fill="#8B4513"/><rect x="25" y="52" width="50" height="6" fill="#CD853F" rx="3"/><path d="M30 20 L45 5 L55 5 L70 20" fill="#FF8C00" opacity="0.6"/></svg>`;
 
     function addMessage(text, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${sender}`;
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'avatar';
-        // نستخدم أيقونات SVG بسيطة (لأن Rive لكل رسالة سيكون ثقيلاً)
-        avatarDiv.innerHTML = sender === 'teacher' ? 
-            '<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="25" fill="#FFB6C1"/><circle cx="35" cy="35" r="4" fill="black"/><circle cx="65" cy="35" r="4" fill="black"/><path d="M40 50 Q50 60,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="65" width="20" height="25" fill="#4169E1" rx="5"/><circle cx="45" cy="90" r="6" fill="#8B4513"/><circle cx="55" cy="90" r="6" fill="#8B4513"/><rect x="25" y="55" width="50" height="8" fill="#CD853F" rx="4"/></svg>' :
-            '<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="22" fill="#FFD700"/><circle cx="38" cy="35" r="4" fill="black"/><circle cx="62" cy="35" r="4" fill="black"/><path d="M40 50 Q50 58,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="62" width="20" height="25" fill="#32CD32" rx="5"/><circle cx="45" cy="87" r="6" fill="#8B4513"/><circle cx="55" cy="87" r="6" fill="#8B4513"/><rect x="25" y="52" width="50" height="6" fill="#CD853F" rx="3"/><path d="M30 20 L45 5 L55 5 L70 20" fill="#FF8C00" opacity="0.6"/></svg>';
+        avatarDiv.innerHTML = sender === 'teacher' ? teacherSVG : studentSVG;
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         contentDiv.innerHTML = text;
@@ -485,7 +474,7 @@
         typingMsg.className = 'message teacher';
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'avatar';
-        avatarDiv.innerHTML = '<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="25" fill="#FFB6C1"/><circle cx="35" cy="35" r="4" fill="black"/><circle cx="65" cy="35" r="4" fill="black"/><path d="M40 50 Q50 60,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="65" width="20" height="25" fill="#4169E1" rx="5"/><circle cx="45" cy="90" r="6" fill="#8B4513"/><circle cx="55" cy="90" r="6" fill="#8B4513"/><rect x="25" y="55" width="50" height="8" fill="#CD853F" rx="4"/></svg>';
+        avatarDiv.innerHTML = teacherSVG;
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         contentDiv.innerHTML = t.typing + ' <span class="loading-spinner"></span>';
@@ -541,7 +530,7 @@
         }
     }
 
-    // ---------- اهتزاز زر رفع الصورة ----------
+    // اهتزاز زر الصورة
     function startShake() { if(effectsEnabled){ const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.add('shake'); } }
     function stopShake() { const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.remove('shake'); }
     setInterval(() => { if(effectsEnabled && !startBtn.disabled) { startShake(); setTimeout(() => stopShake(), 1000); } }, 10000);
@@ -560,7 +549,7 @@
             speechBubbleDiv.classList.remove('visible');
         }
     });
-    toggleEffectsBtn.click(); // تشغيل افتراضي
+    toggleEffectsBtn.click();
 </script>
 </body>
 </html>
