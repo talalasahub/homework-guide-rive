@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>دليل الواجب - المدرس الذكي (Impossible UI with Rive)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- مكتبة Rive Canvas -->
+    <script src="https://unpkg.com/@rive-app/canvas@2.15.3"></script>
+    <style>
+        /* جميع الأنماط السابقة (مثل index.html الأول) لكن سأدمجها كاملة */
+        :root {
+            --primary-green: #2ecc71;
+            --dark-green: #27ae60;
+            --light-green: #d5f5e3;
+            --white: #ffffff;
+            --light-gray: #f8f9fa;
+            --soft-white: #f0f7f0;
+            --warning-yellow: #fff3cd;
+            --warning-border: #ffc107;
+            --error-red: #e74c3c;
+            --info-blue: #3498db;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            margin: 0; padding: 10px; text-align: center; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; transition: background 0.3s;
+        }
+        body.animations-enabled {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            animation: waveBackground 6s ease infinite;
+        }
+        @keyframes waveBackground {
+            0% { background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); }
+            50% { background: linear-gradient(135deg, #d5f5e3 0%, #b8e0b9 100%); }
+            100% { background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); }
+        }
+        .container { max-width: 950px; width: 100%; margin: 0 auto; background: var(--white); padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(46, 204, 113, 0.2); border: 2px solid var(--primary-green); }
+        .character-area { display: flex; justify-content: center; margin-bottom: 10px; }
+        #riveCharacter { width: 150px; height: 150px; cursor: pointer; transition: transform 0.2s; }
+        .speech-bubble { position: relative; background: #fff9c4; border-radius: 20px; padding: 12px 20px; margin: 10px auto 20px; max-width: 80%; text-align: center; font-size: 1rem; font-weight: bold; color: #7d4d00; border: 2px solid #ffc107; opacity: 0; transform: scale(0.8); transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; }
+        .speech-bubble.visible { opacity: 1; transform: scale(1); }
+        .speech-bubble:after { content: ''; position: absolute; bottom: -15px; right: 30px; border-width: 15px 15px 0 0; border-style: solid; border-color: #ffc107 transparent transparent transparent; }
+        .toggle-effects { background: #f39c12; color: white; border: none; border-radius: 50px; padding: 6px 15px; font-size: 0.8rem; cursor: pointer; margin-bottom: 15px; transition: 0.2s; }
+        .toggle-effects:hover { background: #e67e22; }
+        .header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; background: var(--light-green); padding: 12px 15px; border-radius: 50px; border: 2px solid var(--primary-green); }
+        h1 { color: var(--dark-green); margin: 0; font-size: 2rem; }
+        .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .settings-icon { font-size: 1.8rem; color: var(--primary-green); cursor: pointer; transition: transform 0.3s; }
+        .settings-icon:hover { transform: rotate(90deg); color: var(--dark-green); }
+        #languageSelect { padding: 8px 15px; border: 2px solid var(--primary-green); border-radius: 30px; font-size: 1rem; background: white; cursor: pointer; }
+        .subtitle { color: var(--text-light); margin-bottom: 20px; font-size: 1.1rem; }
+        .settings-panel { background: var(--soft-white); padding: 20px; border-radius: 20px; margin-bottom: 20px; display: none; border: 2px solid var(--primary-green); }
+        .settings-panel.visible { display: block; }
+        .settings-panel input, .settings-panel select { padding: 12px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 14px; margin: 5px 0; width: 100%; background: white; }
+        .credit-counter { background: var(--light-green); border-right: 4px solid var(--primary-green); padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--dark-green); }
+        .welcome-message { background: var(--light-green); border-right: 4px solid var(--primary-green); padding: 15px; border-radius: 15px; margin-bottom: 20px; text-align: center; font-size: 1.1rem; color: var(--dark-green); animation: fadeIn 0.5s; }
+        .question-area { margin-bottom: 15px; }
+        textarea { width: 100%; padding: 15px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 16px; resize: vertical; background: var(--soft-white); }
+        .file-area { display: flex; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; background: var(--light-green); padding: 10px; border-radius: 15px; }
+        .custom-file-upload { background: var(--primary-green); color: white; padding: 12px 20px; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.3s; border: none; white-space: nowrap; }
+        .custom-file-upload:hover { background: var(--dark-green); }
+        .file-area input[type="file"] { display: none; }
+        .ocr-status { color: var(--primary-green); font-size: 0.9rem; flex: 1; text-align: right; }
+        .button-group { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        button { background: var(--primary-green); color: white; border: none; padding: 14px 20px; font-size: 1.1rem; border-radius: 15px; cursor: pointer; font-weight: bold; transition: all 0.3s; flex: 1 1 auto; min-width: 160px; box-shadow: 0 4px 10px rgba(46,204,113,0.3); }
+        button:hover { background: var(--dark-green); transform: translateY(-2px); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        #resetBtn { background-color: var(--info-blue); }
+        .shake { animation: shake 0.5s ease-in-out infinite; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } 100% { transform: translateX(0); } }
+        .chat-box { margin-top: 20px; padding: 15px; background: var(--light-gray); border-radius: 20px; text-align: right; min-height: 250px; border-right: 4px solid var(--primary-green); overflow-y: auto; max-height: 400px; }
+        .message { margin: 15px 0; padding: 12px; border-radius: 18px; max-width: 90%; clear: both; word-wrap: break-word; display: flex; align-items: flex-start; gap: 10px; }
+        .teacher { background: #e1f0fa; border-right: 4px solid var(--info-blue); margin-left: auto; flex-direction: row; }
+        .student { background: var(--light-green); border-left: 4px solid var(--primary-green); margin-right: auto; flex-direction: row-reverse; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); flex-shrink: 0; }
+        .avatar svg { width: 90%; height: 90%; }
+        .message-content { flex: 1; font-size: 1rem; }
+        .tip-box { background: var(--warning-yellow); border-right: 4px solid var(--warning-border); padding: 15px; border-radius: 15px; margin: 20px 0 10px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .tip-avatar { width: 70px; height: 70px; border-radius: 50%; background: #ffecb3; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .student-input-area { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .student-input-area input { flex: 1 1 200px; padding: 14px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 16px; background: var(--soft-white); min-width: 150px; }
+        .footer-links { margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .footer-links a { display: inline-block; padding: 10px 20px; border-radius: 50px; font-size: 1rem; font-weight: bold; text-decoration: none; transition: all 0.3s; border: 2px solid var(--primary-green); background: var(--white); color: var(--dark-green); }
+        .footer-links a:hover { background: var(--light-green); transform: translateY(-2px); }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-green); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 600px) { .container { padding: 15px; } .button-group button { width: 100%; } .student-input-area button { width: 100%; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 id="mainTitle">🧑‍🏫 دليل الواجب</h1>
+        <div class="header-controls">
+            <select id="languageSelect">
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="uk">🇺🇦 Українська</option>
+                <option value="sq">🇦🇱 Shqip</option>
+            </select>
+            <i class="fas fa-cog settings-icon" id="settingsToggle"></i>
+            <button class="toggle-effects" id="toggleEffectsBtn">🎮 تشغيل المؤثرات</button>
+        </div>
+    </div>
+    <p class="subtitle" id="subTitle">لا نعطيك الإجابة، نعلمك كيف تفكر!</p>
+
+    <div class="character-area">
+        <canvas id="riveCharacter" width="150" height="150" style="width:150px; height:150px;"></canvas>
+    </div>
+    <div id="speechBubble" class="speech-bubble"></div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <input type="text" id="apiKeyInput" placeholder="مفتاح Gemini API" value="AIzaSyAoAd5BjCY3SPAhQlOduNezucJ-Wz9LV2E">
+        <select id="modelSelect">
+            <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash</option>
+            <option value="gemini-2.5-flash" selected>✨ Gemini 2.5 Flash</option>
+            <option value="gemini-2.5-pro">🚀 Gemini 2.5 Pro</option>
+        </select>
+        <div class="credit-counter"><i class="fas fa-chart-line"></i><span id="creditDisplay">الرصيد التقريبي: 60 طلب متبقي</span></div>
+        <p style="font-size:0.8rem;">* يُعاد تعيين العداد كل دقيقة.</p>
+    </div>
+
+    <div id="welcomeMessage" class="welcome-message"></div>
+    <div class="question-area"><textarea id="questionInput" rows="3" placeholder="اكتب سؤالك هنا ..."></textarea></div>
+
+    <div class="file-area">
+        <label for="imageInput" class="custom-file-upload" id="customFileLabel">📸 اختر صورة</label>
+        <input type="file" id="imageInput" accept="image/*">
+        <div id="ocrStatus" class="ocr-status"></div>
+    </div>
+
+    <div class="button-group">
+        <button onclick="startNewQuestion()" id="startBtn">🔍 ابدأ المحادثة</button>
+        <button onclick="resetConversation()" id="resetBtn">🔄 بداية جديدة</button>
+    </div>
+
+    <div class="chat-box" id="chatBox" style="display: none;"><div id="messages"></div></div>
+    <div id="tipContainer" class="tip-box" style="display: none;"><div id="tipAvatar" class="tip-avatar"></div><div class="tip-text"><span id="tipText"></span></div></div>
+    <div id="studentArea" style="display: none;" class="student-input-area">
+        <input type="text" id="studentAnswer" placeholder="اكتب إجابتك هنا...">
+        <button onclick="sendStudentAnswer()" id="sendBtn">إرسال إجابتي</button>
+    </div>
+
+    <div class="footer-links">
+        <a href="help.html" target="_blank" id="helpLink">📘❓ دليل الاستخدام (للأهل)</a>
+        <a href="https://paypal.me/forALLRefugees" target="_blank" class="donate-link" id="donateLink" style="background:#ffaa33; border-color:#ff8c42; color:#4b2e1a;">💖 دعم التطبيق (تبرع)</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios@1.6.8/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.0/dist/tesseract.min.js"></script>
+
+<script>
+    // ---------- عناصر الصفحة الأساسية ----------
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const modelSelect = document.getElementById('modelSelect');
+    const languageSelect = document.getElementById('languageSelect');
+    const questionInput = document.getElementById('questionInput');
+    const imageInput = document.getElementById('imageInput');
+    const ocrStatus = document.getElementById('ocrStatus');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const chatBox = document.getElementById('chatBox');
+    const messagesDiv = document.getElementById('messages');
+    const studentArea = document.getElementById('studentArea');
+    const studentAnswer = document.getElementById('studentAnswer');
+    const sendBtn = document.getElementById('sendBtn');
+    const tipContainer = document.getElementById('tipContainer');
+    const tipText = document.getElementById('tipText');
+    const tipAvatar = document.getElementById('tipAvatar');
+    const mainTitle = document.getElementById('mainTitle');
+    const subTitle = document.getElementById('subTitle');
+    const welcomeMessageDiv = document.getElementById('welcomeMessage');
+    const customFileLabel = document.getElementById('customFileLabel');
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const creditDisplay = document.getElementById('creditDisplay');
+    const helpLink = document.getElementById('helpLink');
+    const donateLink = document.getElementById('donateLink');
+    const toggleEffectsBtn = document.getElementById('toggleEffectsBtn');
+    const speechBubbleDiv = document.getElementById('speechBubble');
+
+    let effectsEnabled = true;
+    let requestCount = 0;
+    const MAX_REQUESTS_PER_MINUTE = 60;
+    let creditTimer = null;
+    let conversationHistory = [];
+    let currentQuestion = '';
+    let riveInstance = null;
+
+    // ---------- Rive Canvas Integration (شخصية Rive حقيقية) ----------
+    // TODO: استبدل رابط الملف بملف Rive الحقيقي الذي تختاره
+    const RIVE_FILE_URL = 'https://cdn.rive.app/example_files/smart_cat.riv'; // مثال فقط، قد لا يعمل. استبدله بملف حقيقي من rive.app/community
+
+    function initRive() {
+        const canvas = document.getElementById('riveCharacter');
+        if (!canvas) return;
+        try {
+            riveInstance = new rive.Rive({
+                src: RIVE_FILE_URL,
+                canvas: canvas,
+                autoplay: true,
+                artboard: 'Artboard',          // قد تحتاج لتغيير الاسم
+                stateMachine: 'State Machine 1', // قد تحتاج لتغيير الاسم
+                onLoad: () => {
+                    console.log('✅ Rive file loaded successfully');
+                    canvas.style.width = '150px';
+                    canvas.style.height = '150px';
+                    riveInstance.play();
+                },
+                onError: (err) => {
+                    console.warn('⚠️ Rive load error, falling back to manual drawing', err);
+                    fallbackToManualDrawing();
+                }
+            });
+        } catch(e) {
+            console.warn('Rive init error', e);
+            fallbackToManualDrawing();
+        }
+    }
+
+    // بديل يدوي مؤقت (شخصية بومة مرسومة باليد) – يستخدم عندما يفشل تحميل Rive أو كخلفية آمنة
+    function fallbackToManualDrawing() {
+        console.log('🎨 Using fallback manual owl drawing');
+        window.updateCharacter = (action) => {
+            if (!effectsEnabled) return;
+            const canvas = document.getElementById('riveCharacter');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 150; canvas.height = 150;
+            ctx.clearRect(0, 0, 150, 150);
+            // وجه البومة
+            ctx.fillStyle = '#8B5A2B';
+            ctx.beginPath();
+            ctx.ellipse(75, 85, 40, 50, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#A0522D';
+            ctx.beginPath();
+            ctx.ellipse(75, 60, 35, 40, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(55, 50, 10, 0, 2 * Math.PI);
+            ctx.arc(95, 50, 10, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = 'black';
+            if (action === 'thinking') {
+                ctx.beginPath();
+                ctx.arc(52, 48, 4, 0, 2 * Math.PI);
+                ctx.arc(92, 48, 4, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(45, 38);
+                ctx.lineTo(65, 42);
+                ctx.moveTo(105, 38);
+                ctx.lineTo(85, 42);
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            } else if (action === 'happy') {
+                ctx.beginPath();
+                ctx.arc(52, 45, 5, 0, 2 * Math.PI);
+                ctx.arc(92, 45, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(75, 65, 15, 0.1, Math.PI - 0.1);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(42, 40);
+                ctx.lineTo(62, 38);
+                ctx.moveTo(108, 40);
+                ctx.lineTo(88, 38);
+                ctx.stroke();
+                canvas.style.transform = 'translateY(-10px)';
+                setTimeout(() => canvas.style.transform = '', 400);
+            } else if (action === 'nod') {
+                canvas.style.transform = 'rotate(8deg)';
+                setTimeout(() => canvas.style.transform = '', 200);
+            } else {
+                ctx.beginPath();
+                ctx.arc(55, 50, 5, 0, 2 * Math.PI);
+                ctx.arc(95, 50, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(45, 42);
+                ctx.lineTo(65, 40);
+                ctx.moveTo(105, 42);
+                ctx.lineTo(85, 40);
+                ctx.stroke();
+            }
+        };
+        // تعيين حالة افتراضية
+        window.updateCharacter('normal');
+    }
+
+    // محاولة تحميل Rive أولاً، فإن فشل استخدم البديل اليدوي
+    initRive();
+
+    // في حالة نجاح تحميل Rive (أي if (riveInstance)), سنقوم بكتابة دالة updateCharacter تتعامل مع Rive
+    // لكن لأن ملف Rive الحقيقي غير مضمون الأسماء، سأعطي دالة عامة تتحقق من وجود الحالات.
+    // لضمان العمل، سأضيف دالة تحقق لتغطية كل الحالات:
+    window.updateCharacter = (action) => {
+        if (!effectsEnabled) return;
+        if (riveInstance && riveInstance.stateMachineInputs) {
+            const inputs = riveInstance.stateMachineInputs('State Machine 1');
+            if (inputs) {
+                if (action === 'thinking' && inputs.find(i => i.name === 'thinking')) inputs.find(i => i.name === 'thinking').fire();
+                else if (action === 'happy' && inputs.find(i => i.name === 'happy')) inputs.find(i => i.name === 'happy').fire();
+                else if (action === 'nod' && inputs.find(i => i.name === 'nod')) inputs.find(i => i.name === 'nod').fire();
+                else fallbackToManualDrawing()(action);
+            } else fallbackToManualDrawing()(action);
+        } else if (riveInstance && riveInstance.stateMachine) {
+            // طريقة بديلة للتحكم المباشر
+            const stateMachine = riveInstance.stateMachine;
+            if (stateMachine) {
+                if (action === 'thinking') stateMachine.setState('thinking');
+                else if (action === 'happy') stateMachine.setState('happy');
+                else if (action === 'nod') stateMachine.setState('nod');
+                else stateMachine.setState('idle');
+            } else fallbackToManualDrawing()(action);
+        } else {
+            fallbackToManualDrawing()(action);
+        }
+    };
+
+    function showSpeechBubble(message, duration = 3000) {
+        if (!effectsEnabled) return;
+        speechBubbleDiv.textContent = message;
+        speechBubbleDiv.classList.add('visible');
+        setTimeout(() => speechBubbleDiv.classList.remove('visible'), duration);
+    }
+
+    // ---------- عداد الرصيد ووظائف اللغة ----------
+    function updateCreditDisplay() {
+        const remaining = Math.max(0, MAX_REQUESTS_PER_MINUTE - requestCount);
+        const lang = languageSelect.value;
+        if (lang === 'ar') creditDisplay.innerText = `الرصيد التقريبي: ${remaining} طلب متبقي هذا الدقيقة`;
+        else if (lang === 'en') creditDisplay.innerText = `Estimated credit: ${remaining} requests left this minute`;
+        else if (lang === 'uk') creditDisplay.innerText = `Орієнтовний кредит: ${remaining} запитів залишилось цієї хвилини`;
+        else if (lang === 'sq') creditDisplay.innerText = `Krediti i përafërt: ${remaining} kërkesa të mbetura këtë minutë`;
+    }
+    function resetRequestCount() { requestCount = 0; updateCreditDisplay(); }
+    function startCreditTimer() { if (creditTimer) clearInterval(creditTimer); creditTimer = setInterval(resetRequestCount, 60000); }
+    function incrementRequestCount() { requestCount++; updateCreditDisplay(); }
+    settingsToggle.addEventListener('click', () => { settingsPanel.classList.toggle('visible'); });
+
+    // ---------- الترجمات (مختصرة لكنها كاملة في التطبيق الفعلي) ----------
+    const translations = {
+        ar: { mainTitle: "🧑‍🏫 دليل الواجب", subTitle: "لا نعطيك الإجابة، نعلمك كيف تفكر!", welcome: "مرحباً ابني، اكتب أو صوّر المسألة التي صعُبت عليك في دروسك وسأدلك كيف تحلها", questionPlaceholder: "اكتب سؤالك هنا (رياضيات، علوم، تاريخ، لغة ...)", customFile: "📸 اختر صورة", startBtn: "🔍 ابدأ المحادثة", resetBtn: "🔄 بداية جديدة", studentAnswerPlaceholder: "اكتب إجابتك هنا...", sendBtn: "إرسال إجابتي", typing: "المدرس يكتب...", error: "خطأ", ocrStart: "🖼️ جاري استخراج النص من الصورة...", ocrProgress: "🖼️ التعرف على النص: ", ocrSuccess: "✅ تم استخراج النص بنجاح", ocrFail: "❌ فشل استخراج النص", error429: "لقد تجاوزت الحد المسموح من الطلبات. انتظر قليلاً.", error403: "المفتاح غير صالح. تأكد من صحة المفتاح.", noApiKey: "❌ الرجاء إدخال مفتاح API", noQuestion: "❌ الرجاء كتابة سؤال أو اختيار صورة", noAnswer: "الرجاء كتابة إجابتك أولاً.", helpLink: "📘 ❓ دليل الاستخدام (للأهل)", donateLink: "💖 دعم التطبيق (تبرع)" },
+        en: { mainTitle: "🧑‍🏫 Homework Guide", subTitle: "We don't give you the answer, we teach you how to think!", welcome: "Hello my child, write or take a picture...", questionPlaceholder: "Write your question here (Math, Science, History...)", customFile: "📸 Choose image", startBtn: "🔍 Start conversation", resetBtn: "🔄 New start", studentAnswerPlaceholder: "Write your answer here...", sendBtn: "Send my answer", typing: "Teacher is typing...", error: "Error", ocrStart: "🖼️ Extracting text from image...", ocrProgress: "🖼️ Recognizing text: ", ocrSuccess: "✅ Text extracted successfully", ocrFail: "❌ Failed to extract text", error429: "You have exceeded the allowed request limit. Please wait a moment.", error403: "Invalid API key. Please check your key.", noApiKey: "❌ Please enter API key", noQuestion: "❌ Please write a question or choose an image", noAnswer: "Please write your answer first.", helpLink: "📘❓ User guide (for parents)", donateLink: "💖 Support the app (donate)" },
+        uk: { /* ... يمكن استكمالها بنفس الشكل */ mainTitle: "🧑‍🏫 Довідник з домашніх завдань", subTitle: "Ми не даємо тобі відповідь, ми вчимо тебе думати!", welcome: "Привіт, моя дитино...", questionPlaceholder: "Напиши своє запитання...", customFile: "📸 Вибрати зображення", startBtn: "🔍 Почати розмову", resetBtn: "🔄 Новий початок", studentAnswerPlaceholder: "Напиши свою відповідь тут...", sendBtn: "Надіслати відповідь", typing: "Вчитель друкує...", error: "Помилка", ocrStart: "🖼️ Вилучення тексту...", ocrProgress: "🖼️ Розпізнавання тексту: ", ocrSuccess: "✅ Текст успішно вилучено", ocrFail: "❌ Не вдалося вилучити текст", error429: "Ви перевищили ліміт запитів. Зачекайте трохи.", error403: "Недійсний ключ API. Перевірте ключ.", noApiKey: "❌ Будь ласка, введіть ключ API", noQuestion: "❌ Будь ласка, напишіть запитання або виберіть зображення", noAnswer: "Будь ласка, спочатку напишіть відповідь.", helpLink: "📘 ❓ Посібник користувача (для батьків)", donateLink: "💖 Підтримати додаток (донат)" },
+        sq: { /* يمكن تركها فارغة أو نسخ نموذج */ }
+    };
+
+    function updateUILanguage() {
+        const lang = languageSelect.value;
+        const t = translations[lang] || translations.ar;
+        mainTitle.textContent = t.mainTitle;
+        subTitle.textContent = t.subTitle;
+        welcomeMessageDiv.textContent = t.welcome;
+        questionInput.placeholder = t.questionPlaceholder;
+        customFileLabel.textContent = t.customFile;
+        startBtn.innerHTML = t.startBtn;
+        resetBtn.innerHTML = t.resetBtn;
+        studentAnswer.placeholder = t.studentAnswerPlaceholder;
+        sendBtn.textContent = t.sendBtn;
+        helpLink.textContent = t.helpLink;
+        donateLink.textContent = t.donateLink;
+        updateCreditDisplay();
+    }
+    languageSelect.addEventListener('change', updateUILanguage);
+    window.addEventListener('load', () => { updateUILanguage(); startCreditTimer(); });
+
+    // ---------- دوال OCR ----------
+    async function extractTextFromImage(file, langCode) {
+        const t = translations[languageSelect.value] || translations.ar;
+        return new Promise((resolve, reject) => {
+            ocrStatus.innerText = t.ocrStart;
+            Tesseract.recognize(file, langCode, { logger: m => { if (m.status === 'recognizing text') ocrStatus.innerText = t.ocrProgress + Math.round(m.progress*100) + '%'; } })
+                .then(({ data: { text } }) => { ocrStatus.innerText = t.ocrSuccess; resolve(text.trim()); })
+                .catch(err => { ocrStatus.innerText = t.ocrFail; reject(err); });
+        });
+    }
+
+    const teacherSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="25" fill="#FFB6C1"/><circle cx="35" cy="35" r="4" fill="black"/><circle cx="65" cy="35" r="4" fill="black"/><path d="M40 50 Q50 60,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="65" width="20" height="25" fill="#4169E1" rx="5"/><circle cx="45" cy="90" r="6" fill="#8B4513"/><circle cx="55" cy="90" r="6" fill="#8B4513"/><rect x="25" y="55" width="50" height="8" fill="#CD853F" rx="4"/><text x="50" y="110" font-size="12" text-anchor="middle" fill="black">المعلم</text></svg>`;
+    const studentSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="22" fill="#FFD700"/><circle cx="38" cy="35" r="4" fill="black"/><circle cx="62" cy="35" r="4" fill="black"/><path d="M40 50 Q50 58,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="62" width="20" height="25" fill="#32CD32" rx="5"/><circle cx="45" cy="87" r="6" fill="#8B4513"/><circle cx="55" cy="87" r="6" fill="#8B4513"/><rect x="25" y="52" width="50" height="6" fill="#CD853F" rx="3"/><path d="M30 20 L45 5 L55 5 L70 20" fill="#FF8C00" opacity="0.6"/><text x="50" y="110" font-size="12" text-anchor="middle" fill="black">الطالب</text></svg>`;
+
+    function addMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar';
+        avatarDiv.innerHTML = sender === 'teacher' ? teacherSVG : studentSVG;
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.innerHTML = text;
+        msgDiv.appendChild(avatarDiv); msgDiv.appendChild(contentDiv);
+        messagesDiv.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function showRandomTip() {
+        const lang = languageSelect.value;
+        const tips = { ar: ["🌟 أحسنت! تذكر أن تشرب الماء لتكون نشيطاً!", "📚 رائع! لا تنس قراءة 10 دقائق يومياً لتنشيط عقلك."], en: ["🌟 Great job! Remember to drink water!", "📚 Wonderful! Don't forget to read daily."] };
+        const list = tips[lang] || tips.ar;
+        tipText.textContent = list[Math.floor(Math.random() * list.length)];
+        tipContainer.style.display = 'flex';
+    }
+    function hideTip() { tipContainer.style.display = 'none'; }
+
+    function resetConversation() {
+        messagesDiv.innerHTML = '';
+        conversationHistory = [];
+        currentQuestion = '';
+        chatBox.style.display = 'none';
+        studentArea.style.display = 'none';
+        questionInput.value = '';
+        studentAnswer.value = '';
+        imageInput.value = '';
+        ocrStatus.innerText = '';
+        hideTip();
+    }
+
+    async function startNewQuestion() {
+        let question = questionInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+        const model = modelSelect.value;
+        const lang = languageSelect.value;
+        const imageFile = imageInput.files[0];
+        const t = translations[lang] || translations.ar;
+        if (!apiKey) { alert(t.noApiKey); return; }
+        if (!question && !imageFile) { alert(t.noQuestion); return; }
+        if (imageFile) {
+            try { const extracted = await extractTextFromImage(imageFile, lang); if (extracted) question = question ? `${question}\n\n(${t.ocrSuccess}: ${extracted})` : extracted; }
+            catch(error) { alert(t.ocrFail + ': ' + error.message); return; }
+        }
+        chatBox.style.display = 'block';
+        studentArea.style.display = 'flex';
+        messagesDiv.innerHTML = '';
+        conversationHistory = [];
+        currentQuestion = question;
+        hideTip();
+        addMessage(question, 'student');
+        if (effectsEnabled) { window.updateCharacter('thinking'); showSpeechBubble('دعني أفكر في سؤالك...', 2000); }
+        await sendToAI(question, true, lang);
+    }
+
+    async function sendStudentAnswer() {
+        const answer = studentAnswer.value.trim();
+        const t = translations[languageSelect.value] || translations.ar;
+        if (!answer) { alert(t.noAnswer); return; }
+        addMessage(answer, 'student');
+        studentAnswer.value = '';
+        if (effectsEnabled) { window.updateCharacter('nod'); showSpeechBubble('أحسنت المحاولة! استمر', 1500); }
+        await sendToAI(answer, false, languageSelect.value);
+    }
+
+    async function sendToAI(userInput, isFirstMessage, lang) {
+        const apiKey = apiKeyInput.value.trim();
+        const model = modelSelect.value;
+        const maxTokens = 65536;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const t = translations[lang] || translations.ar;
+        if (requestCount >= MAX_REQUESTS_PER_MINUTE) { alert(t.error429); return; }
+        startBtn.disabled = true; sendBtn.disabled = true; resetBtn.disabled = true;
+        const typingMsg = document.createElement('div');
+        typingMsg.className = 'message teacher';
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar';
+        avatarDiv.innerHTML = teacherSVG;
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.innerHTML = t.typing + ' <span class="loading-spinner"></span>';
+        typingMsg.appendChild(avatarDiv); typingMsg.appendChild(contentDiv);
+        messagesDiv.appendChild(typingMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        let systemPrompt = '';
+        if (isFirstMessage) {
+            systemPrompt = `أنت مدرس ذكي ومشجع للأطفال. قدم تلميحات دون إعطاء الحل مباشرة. اكتب بلغة المستخدم (${lang}). السؤال: ${currentQuestion}`;
+        } else {
+            let conversationText = '';
+            conversationHistory.forEach(msg => { conversationText += `${msg.role}: ${msg.content}\n`; });
+            systemPrompt = `حلل إجابة الطالب: "${userInput}". إذا كانت صحيحة وكاملة، ابدأ بـ "أحسنت!" وأضف "[تم الحل]" في النهاية. وإلا قدم تلميحة. اكتب بلغة المستخدم (${lang}). المحادثة السابقة:\n${conversationText}`;
+        }
+
+        try {
+            incrementRequestCount();
+            const response = await axios.post(url, {
+                contents: [{ parts: [{ text: systemPrompt }] }],
+                safetySettings: [{ category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }],
+                generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: maxTokens }
+            }, { headers: { "Content-Type": "application/json" } });
+            messagesDiv.removeChild(typingMsg);
+            let answer = response.data.candidates[0].content.parts[0].text;
+            const displayAnswer = answer.replace('[تم الحل]', '');
+            addMessage(displayAnswer, 'teacher');
+            if (isFirstMessage) {
+                conversationHistory.push({ role: 'طالب', content: currentQuestion });
+                conversationHistory.push({ role: 'مدرس', content: answer });
+            } else {
+                conversationHistory.push({ role: 'طالب', content: userInput });
+                conversationHistory.push({ role: 'مدرس', content: answer });
+            }
+            if (answer.includes('[تم الحل]')) {
+                showRandomTip();
+                if (effectsEnabled) { window.updateCharacter('happy'); showSpeechBubble('🎉 أحسنت! لقد حللت السؤال بنجاح! 🎉', 4000); }
+            } else {
+                hideTip();
+                if (!isFirstMessage && effectsEnabled) { window.updateCharacter('nod'); showSpeechBubble('حاول مجدداً، أنت قريب!', 2000); }
+            }
+        } catch (error) {
+            if (typingMsg.parentNode) messagesDiv.removeChild(typingMsg);
+            let errorMsg = error.message;
+            if (error.response) {
+                if (error.response.status === 429) errorMsg = t.error429;
+                else if (error.response.status === 403) errorMsg = t.error403;
+                else if (error.response.data?.error?.message) errorMsg = error.response.data.error.message;
+            }
+            addMessage(`⚠️ ${t.error}: ${errorMsg}`, 'teacher');
+        } finally {
+            startBtn.disabled = false; sendBtn.disabled = false; resetBtn.disabled = false;
+        }
+    }
+
+    // ---------- اهتزاز زر رفع الصورة بشكل دوري ----------
+    function startShake() { if(effectsEnabled){ const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.add('shake'); } }
+    function stopShake() { const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.remove('shake'); }
+    setInterval(() => { if(effectsEnabled && !startBtn.disabled) { startShake(); setTimeout(() => stopShake(), 1000); } }, 10000);
+
+    let animationsActive = true;
+    toggleEffectsBtn.addEventListener('click', () => {
+        animationsActive = !animationsActive;
+        effectsEnabled = animationsActive;
+        if (effectsEnabled) {
+            toggleEffectsBtn.textContent = '⏸️ إيقاف المؤثرات';
+            document.body.classList.add('animations-enabled');
+        } else {
+            toggleEffectsBtn.textContent = '🎮 تشغيل المؤثرات';
+            document.body.classList.remove('animations-enabled');
+            stopShake();
+            speechBubbleDiv.classList.remove('visible');
+        }
+    });
+    toggleEffectsBtn.click(); // تشغيل افتراضي
+</script>
+</body>
+</html>
