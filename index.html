@@ -255,24 +255,34 @@
     let hoverInput = null;      // سنجد الـ Boolean input باسم "Hover/Select"
 
     // تحميل الشخصية التفاعلية
-    function loadRiveAvatar() {
+ function loadRiveAvatar() {
     const canvas = document.getElementById('riveCharacter');
     if (!canvas) return;
 
     riveInstance = new rive.Rive({
-        src: 'avatar.riv',   // تأكد من المسار
+        src: 'avatar.riv',
         canvas: canvas,
         autoplay: true,
+        artboard: 'Artboard',                    // الاسم الافتراضي
+        stateMachines: 'State Machine 1',        // الأسماء الشائعة
         onLoad: () => {
             console.log('✅ تم تحميل Rive بنجاح');
             canvas.style.width = '120px';
             canvas.style.height = '120px';
-            // نجرب تشغيل أي حركة
-            if (riveInstance && riveInstance.play) riveInstance.play();
-            // نغيّر الشخصية إلى الوضع اليدوي فقط إذا فشل Rive
+            
+            // محاولة العثور على المدخلات
+            const inputs = riveInstance.stateMachineInputs('State Machine 1');
+            if (inputs) {
+                console.log('📌 المدخلات الموجودة:', inputs.map(i => i.name));
+                // نبحث عن مدخل منطقي (Boolean) لاستخدامه
+                window.riveInput = inputs.find(i => i.type === 'Boolean') || inputs[0];
+            }
+            
+            riveInstance.play();
         },
         onError: (err) => {
             console.error('❌ خطأ Rive:', err);
+            fallbackToManualDrawing();
         }
     });
 }
@@ -347,39 +357,26 @@
             ctx.stroke();
         }
     }
-
-    function fallbackToManualDrawing() {
-        window.updateCharacter = (action) => {
-            if (!effectsEnabled) return;
-            if (action === 'thinking') drawManualOwl('thinking');
-            else if (action === 'happy') drawManualOwl('happy');
-            else if (action === 'nod') drawManualOwl('nod');
-            else drawManualOwl('normal');
-        };
-        drawManualOwl('normal');
-    }
-
-    // دالة التحكم بالشخصية باستخدام الـ Boolean input
+    // دالة التحكم بالشخصية (يدمج البديل اليدوي مع Rive)
     window.updateCharacter = (action) => {
         if (!effectsEnabled) return;
-        if (riveInstance && hoverInput) {
-            // نستخدم نفس المدخل "Hover/Select" لكل الأحداث المختلفة
-            // نضبطه على true ثم نعيده إلى false بعد فترة قصيرة لمحاكاة الإيماءة/التفكير
-            hoverInput.value = true;
+
+        // 1. إذا كانت شخصية Rive موجودة ولديها مدخلات (inputs)، استخدمها للتفاعل
+        if (riveInstance && window.riveInput) {
+            // تشغيل التأثير (سنستخدم نفس المدخل لجميع الأحداث)
+            window.riveInput.value = true;
             setTimeout(() => {
-                if (riveInstance && hoverInput) hoverInput.value = false;
+                if (window.riveInput) window.riveInput.value = false;
             }, 500);
-            // اختياري: يمكن إضافة سلوك مختلف حسب الـ action (لو كان الملف يدعم)
-            // لكن في هذا الملف، المدخل واحد، فلنحقق الحركات كلها بنفس الطريقة.
-        } else {
-            // البديل اليدوي
+        } 
+        // 2. وإلا، استخدم الرسم اليدوي كبديل (وهو يعمل دائمًا)
+        else {
             if (action === 'thinking') drawManualOwl('thinking');
             else if (action === 'happy') drawManualOwl('happy');
             else if (action === 'nod') drawManualOwl('nod');
             else drawManualOwl('normal');
         }
     };
-
     function showSpeechBubble(message, duration = 3000) {
         if (!effectsEnabled) return;
         speechBubbleDiv.textContent = message;
