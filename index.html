@@ -256,36 +256,26 @@
 
     // تحميل الشخصية التفاعلية
     function loadRiveAvatar() {
-        const canvas = document.getElementById('riveCharacter');
-        if (!canvas) return;
+    const canvas = document.getElementById('riveCharacter');
+    if (!canvas) return;
 
-        riveInstance = new rive.Rive({
-            src: 'avatar.riv',            // <── اسم الملف الذي حملته (غير حسب اسم ملفك)
-            canvas: canvas,
-            autoplay: true,
-            artboard: 'Artboard',          // غالباً اسمه Artboard
-            stateMachines: 'State Machine 1', // اسم آلة الحالات (قد يكون "State Machine 1")
-            onLoad: () => {
-                console.log('✅ تم تحميل شخصية Rive بنجاح');
-                canvas.style.width = '120px';
-                canvas.style.height = '120px';
-                // الحصول على المدخلات (inputs) للتحكم بها
-                const inputs = riveInstance.stateMachineInputs('State Machine 1');
-                if (inputs) {
-                    // نبحث عن المدخل المنطقي (Boolean) الذي اسمه "Hover/Select"
-                    hoverInput = inputs.find(i => i.name === 'Hover/Select');
-                    if (hoverInput) console.log('✅ تم العثور على المدخل Hover/Select');
-                    else console.warn('⚠️ لم نجد مدخل Hover/Select, قد تحتاج لتغيير الاسم');
-                }
-                riveInstance.play();
-            },
-            onError: (err) => {
-                console.warn('⚠️ فشل تحميل Rive، سيتم استخدام البديل اليدوي', err);
-                fallbackToManualDrawing();
-            }
-        });
-    }
-
+    riveInstance = new rive.Rive({
+        src: 'avatar.riv',   // تأكد من المسار
+        canvas: canvas,
+        autoplay: true,
+        onLoad: () => {
+            console.log('✅ تم تحميل Rive بنجاح');
+            canvas.style.width = '120px';
+            canvas.style.height = '120px';
+            // نجرب تشغيل أي حركة
+            if (riveInstance && riveInstance.play) riveInstance.play();
+            // نغيّر الشخصية إلى الوضع اليدوي فقط إذا فشل Rive
+        },
+        onError: (err) => {
+            console.error('❌ خطأ Rive:', err);
+        }
+    });
+}
     // بديل يدوي (لضمان عمل الشخصية حتى لو فشل تحميل Rive)
     function drawManualOwl(expression = 'normal') {
         const canvas = document.getElementById('riveCharacter');
