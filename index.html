@@ -6,7 +6,6 @@
     <title>دليل الواجب - المدرس الذكي (Impossible UI)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* كل الأنماط كما هي (لم تتغير) */
         :root {
             --primary-green: #2ecc71;
             --dark-green: #27ae60;
@@ -37,7 +36,7 @@
             50% { background: linear-gradient(135deg, #d5f5e3 0%, #b8e0b9 100%); }
             100% { background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); }
         }
-        .container { max-width: 950px; width: 100%; margin: 0 auto; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(46, 204, 113, 0.2); border: 2px solid var(--primary-green); }
+        .container { max-width: 950px; width: 100%; margin: 0 auto; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(46,204,113,0.2); border: 2px solid var(--primary-green); }
         .header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; background: var(--light-green); padding: 12px 15px; border-radius: 50px; border: 2px solid var(--primary-green); }
         h1 { color: var(--dark-green); margin: 0; font-size: 2rem; }
         .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -75,7 +74,7 @@
         .tip-avatar { width: 70px; height: 70px; border-radius: 50%; background: #ffecb3; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .student-input-area { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .student-input-area input { flex: 1 1 200px; padding: 14px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 16px; background: var(--soft-white); min-width: 150px; }
-        .character-area, .rive-character {
+        .character-area {
             text-align: center;
             margin: 15px 0 10px;
         }
@@ -84,8 +83,7 @@
             height: 120px;
             margin: 0 auto;
             cursor: pointer;
-            transition: transform 0.2s;
-            background-color: white;
+            background: white;
             border-radius: 30px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
@@ -211,9 +209,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.8/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.0/dist/tesseract.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.17.0"></script>
+<!-- محاولة تحميل Rive Canvas (إذا كان الملف موجوداً محلياً) -->
+<script src="rive.js" onerror="console.warn('⚠️ rive.js لم يتم تحميله - سيتم استخدام الرسم اليدوي فقط')"></script>
+
 <script>
-    // ------------------- عناصر الصفحة -------------------
+    // ==================== العناصر الأساسية ====================
     const apiKeyInput = document.getElementById('apiKeyInput');
     const modelSelect = document.getElementById('modelSelect');
     const languageSelect = document.getElementById('languageSelect');
@@ -248,58 +248,27 @@
     let creditTimer = null;
     let conversationHistory = [];
     let currentQuestion = '';
-
-    // --- متغيرات Rive ---
     let riveInstance = null;
-    let hoverInput = null;      // سنجد الـ Boolean input باسم "Hover/Select"
+    let riveInput = null;
 
-    // تحميل الشخصية التفاعلية
- function loadRiveAvatar() {
-    const canvas = document.getElementById('riveCharacter');
-    if (!canvas) return;
-
-    riveInstance = new rive.Rive({
-        src: 'avatar.riv',
-        canvas: canvas,
-        autoplay: true,
-        artboard: 'Artboard',                    // الاسم الافتراضي
-        stateMachines: 'State Machine 1',        // الأسماء الشائعة
-        onLoad: () => {
-            console.log('✅ تم تحميل Rive بنجاح');
-            canvas.style.width = '120px';
-            canvas.style.height = '120px';
-            
-            // محاولة العثور على المدخلات
-            const inputs = riveInstance.stateMachineInputs('State Machine 1');
-            if (inputs) {
-                console.log('📌 المدخلات الموجودة:', inputs.map(i => i.name));
-                // نبحث عن مدخل منطقي (Boolean) لاستخدامه
-                window.riveInput = inputs.find(i => i.type === 'Boolean') || inputs[0];
-            }
-            
-            riveInstance.play();
-        },
-        onError: (err) => {
-            console.error('❌ خطأ Rive:', err);
-            fallbackToManualDrawing();
-        }
-    });
-}
-    // بديل يدوي (لضمان عمل الشخصية حتى لو فشل تحميل Rive)
+    // ==================== رسم البومة اليدوي (بديل قوي) ====================
     function drawManualOwl(expression = 'normal') {
         const canvas = document.getElementById('riveCharacter');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         canvas.width = 120; canvas.height = 120;
         ctx.clearRect(0, 0, 120, 120);
+        // الجسم
         ctx.fillStyle = '#8B5A2B';
         ctx.beginPath();
         ctx.ellipse(60, 70, 30, 40, 0, 0, 2 * Math.PI);
         ctx.fill();
+        // الرأس
         ctx.fillStyle = '#A0522D';
         ctx.beginPath();
         ctx.ellipse(60, 50, 28, 32, 0, 0, 2 * Math.PI);
         ctx.fill();
+        // العيون
         ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.arc(45, 42, 8, 0, 2 * Math.PI);
@@ -318,6 +287,9 @@
             ctx.lineTo(68, 35);
             ctx.lineWidth = 3;
             ctx.stroke();
+            const elem = document.getElementById('riveCharacter');
+            elem.style.transform = 'rotate(-3deg)';
+            setTimeout(() => elem.style.transform = '', 500);
         } else if (expression === 'happy') {
             ctx.beginPath();
             ctx.arc(42, 38, 4, 0, 2 * Math.PI);
@@ -356,26 +328,25 @@
             ctx.stroke();
         }
     }
-    // دالة التحكم بالشخصية (يدمج البديل اليدوي مع Rive)
+
+    // ==================== دالة التحكم بالشخصية (يدعم Rive واليدوي) ====================
     window.updateCharacter = (action) => {
         if (!effectsEnabled) return;
-
-        // 1. إذا كانت شخصية Rive موجودة ولديها مدخلات (inputs)، استخدمها للتفاعل
-        if (riveInstance && window.riveInput) {
-            // تشغيل التأثير (سنستخدم نفس المدخل لجميع الأحداث)
-            window.riveInput.value = true;
+        // محاولة استخدام Rive إذا كان موجوداً ولديه مدخلات
+        if (riveInstance && riveInput) {
+            riveInput.value = true;
             setTimeout(() => {
-                if (window.riveInput) window.riveInput.value = false;
+                if (riveInput) riveInput.value = false;
             }, 500);
-        } 
-        // 2. وإلا، استخدم الرسم اليدوي كبديل (وهو يعمل دائمًا)
-        else {
+        } else {
+            // البديل اليدوي
             if (action === 'thinking') drawManualOwl('thinking');
             else if (action === 'happy') drawManualOwl('happy');
             else if (action === 'nod') drawManualOwl('nod');
             else drawManualOwl('normal');
         }
     };
+
     function showSpeechBubble(message, duration = 3000) {
         if (!effectsEnabled) return;
         speechBubbleDiv.textContent = message;
@@ -383,12 +354,42 @@
         setTimeout(() => speechBubbleDiv.classList.remove('visible'), duration);
     }
 
-    // تحميل عند بدء الصفحة
-    window.addEventListener('load', () => {
-        loadRiveAvatar();
-    });
+    // ==================== تهيئة Rive (إذا تم تحميل المكتبة) ====================
+    if (typeof rive !== 'undefined') {
+        (function initRive() {
+            const canvas = document.getElementById('riveCharacter');
+            if (!canvas) return;
+            fetch('avatar.riv').catch(() => {}); // مجرد اختبار وجود الملف
+            riveInstance = new rive.Rive({
+                src: 'avatar.riv',
+                canvas: canvas,
+                autoplay: true,
+                artboard: 'Artboard',
+                stateMachines: 'State Machine 1',
+                onLoad: () => {
+                    console.log('✅ Rive loaded');
+                    canvas.style.width = '120px';
+                    canvas.style.height = '120px';
+                    const inputs = riveInstance.stateMachineInputs('State Machine 1');
+                    if (inputs && inputs.length) {
+                        riveInput = inputs.find(i => i.type === 'Boolean') || inputs[0];
+                        if (riveInput) console.log('✅ Rive input found:', riveInput.name);
+                    }
+                    riveInstance.play();
+                },
+                onError: (err) => {
+                    console.warn('⚠️ Rive error, using manual drawing', err);
+                    riveInstance = null;
+                    drawManualOwl('normal');
+                }
+            });
+        })();
+    } else {
+        console.log('ℹ️ Rive library not loaded, using manual drawing');
+        drawManualOwl('normal');
+    }
 
-    // --- باقي دوال التطبيق (عداد الرصيد، الترجمات، OCR، المحادثة) ---
+    // ==================== عداد الرصيد والترجمات ====================
     function updateCreditDisplay() {
         const remaining = Math.max(0, MAX_REQUESTS_PER_MINUTE - requestCount);
         const lang = languageSelect.value;
@@ -405,7 +406,7 @@
     const translations = {
         ar: { mainTitle: "🧑‍🏫 دليل الواجب", subTitle: "لا نعطيك الإجابة، نعلمك كيف تفكر!", welcome: "مرحباً ابني، اكتب أو صوّر المسألة التي صعُبت عليك في دروسك وسأدلك كيف تحلها", questionPlaceholder: "اكتب سؤالك هنا (رياضيات، علوم، تاريخ، لغة ...)", customFile: "📸 اختر صورة", startBtn: "🔍 ابدأ المحادثة", resetBtn: "🔄 بداية جديدة", studentAnswerPlaceholder: "اكتب إجابتك هنا...", sendBtn: "إرسال إجابتي", typing: "المدرس يكتب...", error: "خطأ", ocrStart: "🖼️ جاري استخراج النص من الصورة...", ocrProgress: "🖼️ التعرف على النص: ", ocrSuccess: "✅ تم استخراج النص بنجاح", ocrFail: "❌ فشل استخراج النص", error429: "لقد تجاوزت الحد المسموح من الطلبات. انتظر قليلاً.", error403: "المفتاح غير صالح. تأكد من صحة المفتاح.", noApiKey: "❌ الرجاء إدخال مفتاح API", noQuestion: "❌ الرجاء كتابة سؤال أو اختيار صورة", noAnswer: "الرجاء كتابة إجابتك أولاً.", helpLink: "📘 ❓ دليل الاستخدام (للأهل)", donateLink: "💖 دعم التطبيق (تبرع)" },
         en: { mainTitle: "🧑‍🏫 Homework Guide", subTitle: "We don't give you the answer, we teach you how to think!", welcome: "Hello my child, write or take a picture...", questionPlaceholder: "Write your question here...", customFile: "📸 Choose image", startBtn: "🔍 Start conversation", resetBtn: "🔄 New start", studentAnswerPlaceholder: "Write your answer here...", sendBtn: "Send my answer", typing: "Teacher is typing...", error: "Error", ocrStart: "🖼️ Extracting text...", ocrProgress: "🖼️ Recognizing: ", ocrSuccess: "✅ Success", ocrFail: "❌ Failed", error429: "Request limit exceeded", error403: "Invalid API key", noApiKey: "❌ Enter API key", noQuestion: "❌ Write a question or choose image", noAnswer: "Please write your answer", helpLink: "📘❓ User guide", donateLink: "💖 Support" },
-        uk: { /* اختصار */ mainTitle: "🧑‍🏫 Довідник", subTitle: "Ми не даємо відповідь, ми вчимо думати!", welcome: "Привіт, напиши або сфотографуй...", questionPlaceholder: "Напиши питання...", customFile: "📸 Вибрати", startBtn: "🔍 Почати", resetBtn: "🔄 Почати знову", studentAnswerPlaceholder: "Напиши відповідь...", sendBtn: "Надіслати", typing: "Вчитель друкує...", error: "Помилка", ocrStart: "🖼️ Вилучення тексту...", ocrProgress: "🖼️ Розпізнавання: ", ocrSuccess: "✅ Успішно", ocrFail: "❌ Не вдалося", error429: "Ліміт запитів", error403: "Невірний ключ", noApiKey: "❌ Введіть ключ", noQuestion: "❌ Напишіть питання", noAnswer: "Напишіть відповідь", helpLink: "📘 ❓ Посібник", donateLink: "💖 Підтримати" },
+        uk: { mainTitle: "🧑‍🏫 Довідник", subTitle: "Ми не даємо відповідь, ми вчимо думати!", welcome: "Привіт, напиши або сфотографуй...", questionPlaceholder: "Напиши питання...", customFile: "📸 Вибрати", startBtn: "🔍 Почати", resetBtn: "🔄 Почати знову", studentAnswerPlaceholder: "Напиши відповідь...", sendBtn: "Надіслати", typing: "Вчитель друкує...", error: "Помилка", ocrStart: "🖼️ Вилучення тексту...", ocrProgress: "🖼️ Розпізнавання: ", ocrSuccess: "✅ Успішно", ocrFail: "❌ Не вдалося", error429: "Ліміт запитів", error403: "Невірний ключ", noApiKey: "❌ Введіть ключ", noQuestion: "❌ Напишіть питання", noAnswer: "Напишіть відповідь", helpLink: "📘 ❓ Посібник", donateLink: "💖 Підтримати" },
         sq: { mainTitle: "🧑‍🏫 Udhëzuesi", subTitle: "Nuk japim përgjigje, të mësojmë të mendosh!", welcome: "Përshëndetje, shkruaj ose fotografo...", questionPlaceholder: "Shkruaj pyetjen...", customFile: "📸 Zgjidh foto", startBtn: "🔍 Fillo", resetBtn: "🔄 Fillo përsëri", studentAnswerPlaceholder: "Shkruaj përgjigjen...", sendBtn: "Dërgo", typing: "Mësuesi po shkruan...", error: "Gabim", ocrStart: "🖼️ Duke nxjerrë tekstin...", ocrProgress: "🖼️ Njohja: ", ocrSuccess: "✅ Sukses", ocrFail: "❌ Dështoi", error429: "Tejkaluar limiti", error403: "Çelës i pavlefshëm", noApiKey: "❒ Vendos çelësin", noQuestion: "❒ Shkruaj pyetje", noAnswer: "Shkruaj përgjigjen", helpLink: "📘 ❓ Udhëzues", donateLink: "💖 Mbështesni" }
     };
 
@@ -426,8 +427,9 @@
         updateCreditDisplay();
     }
     languageSelect.addEventListener('change', updateUILanguage);
-    window.addEventListener('load', () => { updateUILanguage(); startCreditTimer(); });
+    window.addEventListener('load', () => { updateUILanguage(); startCreditTimer(); drawManualOwl('normal'); });
 
+    // ==================== OCR ====================
     async function extractTextFromImage(file, langCode) {
         const t = translations[languageSelect.value] || translations.ar;
         return new Promise((resolve, reject) => {
@@ -438,6 +440,7 @@
         });
     }
 
+    // ==================== SVG للمعلم والطالب ====================
     const teacherSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="25" fill="#FFB6C1"/><circle cx="35" cy="35" r="4" fill="black"/><circle cx="65" cy="35" r="4" fill="black"/><path d="M40 50 Q50 60,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="65" width="20" height="25" fill="#4169E1" rx="5"/><circle cx="45" cy="90" r="6" fill="#8B4513"/><circle cx="55" cy="90" r="6" fill="#8B4513"/><rect x="25" y="55" width="50" height="8" fill="#CD853F" rx="4"/></svg>`;
     const studentSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="22" fill="#FFD700"/><circle cx="38" cy="35" r="4" fill="black"/><circle cx="62" cy="35" r="4" fill="black"/><path d="M40 50 Q50 58,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="62" width="20" height="25" fill="#32CD32" rx="5"/><circle cx="45" cy="87" r="6" fill="#8B4513"/><circle cx="55" cy="87" r="6" fill="#8B4513"/><rect x="25" y="52" width="50" height="6" fill="#CD853F" rx="3"/><path d="M30 20 L45 5 L55 5 L70 20" fill="#FF8C00" opacity="0.6"/></svg>`;
 
@@ -579,7 +582,7 @@
         }
     }
 
-    // اهتزاز زر الصورة
+    // ==================== اهتزاز زر الصورة ====================
     function startShake() { if(effectsEnabled){ const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.add('shake'); } }
     function stopShake() { const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.remove('shake'); }
     setInterval(() => { if(effectsEnabled && !startBtn.disabled) { startShake(); setTimeout(() => stopShake(), 1000); } }, 10000);
