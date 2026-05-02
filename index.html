@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>دليل الواجب - المدرس الذكي (Impossible UI with Rive)</title>
+    <title>دليل الواجب - المدرس الذكي (Impossible UI with AI Mood)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
@@ -62,7 +62,6 @@
         button:hover { background: var(--dark-green); transform: translateY(-2px); }
         button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         #resetBtn { background-color: var(--info-blue); }
-        /* اهتزاز الزر */
         .shake { animation: shake 0.5s ease-in-out infinite; }
         @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } 100% { transform: translateX(0); } }
         .chat-box { margin-top: 20px; padding: 15px; background: var(--light-gray); border-radius: 20px; text-align: right; min-height: 250px; border-right: 4px solid var(--primary-green); overflow-y: auto; max-height: 400px; }
@@ -76,7 +75,6 @@
         .tip-avatar { width: 70px; height: 70px; border-radius: 50%; background: #ffecb3; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .student-input-area { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .student-input-area input { flex: 1 1 200px; padding: 14px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 16px; background: var(--soft-white); min-width: 150px; }
-        /* منطقة الشخصية والفقاعة */
         .character-area {
             text-align: center;
             margin: 15px 0 10px;
@@ -89,6 +87,16 @@
             background: white;
             border-radius: 30px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #aiMoodIcon {
+            display: inline-block;
+            font-size: 2.5rem;
+            margin-top: 8px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
         }
         .speech-bubble {
             position: relative;
@@ -136,7 +144,7 @@
         .footer-links a:hover { background: var(--light-green); transform: translateY(-2px); }
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-green); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 600px) { .container { padding: 15px; } .button-group button { width: 100%; } .student-input-area button { width: 100%; } #riveCanvas { width: 90px; height: 90px; } }
+        @media (max-width: 600px) { .container { padding: 15px; } .button-group button { width: 100%; } .student-input-area button { width: 100%; } #riveCanvas { width: 90px; height: 90px; } #aiMoodIcon { font-size: 2rem; } }
     </style>
 </head>
 <body>
@@ -188,9 +196,10 @@
         <div id="messages"></div>
     </div>
 
-    <!-- الشخصية التفاعلية (Rive + بديل يدوي) -->
+    <!-- الشخصية اليدوية + أيقونة الحالة المزاجية الذكية -->
     <div class="character-area">
         <canvas id="riveCanvas" width="120" height="120" style="width:120px; height:120px;"></canvas>
+        <div id="aiMoodIcon">🤖</div>
         <div id="speechBubble" class="speech-bubble"></div>
     </div>
 
@@ -212,7 +221,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.8/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.0/dist/tesseract.min.js"></script>
-<!-- مكتبة Rive Canvas -->
+<!-- مكتبة Rive (اختيارية - سيتم استخدامها فقط إذا وجد ملف avatar.riv) -->
 <script src="https://unpkg.com/@rive-app/canvas@2.17.0"></script>
 
 <script>
@@ -244,6 +253,7 @@
     const donateLink = document.getElementById('donateLink');
     const toggleEffectsBtn = document.getElementById('toggleEffectsBtn');
     const speechBubbleDiv = document.getElementById('speechBubble');
+    const aiMoodIcon = document.getElementById('aiMoodIcon');
 
     let effectsEnabled = true;
     let requestCount = 0;
@@ -254,7 +264,7 @@
     let riveInstance = null;
     let riveInputs = null;
 
-    // ==================== رسم البومة اليدوي (بديل قوي) ====================
+    // ==================== رسم البومة اليدوي (بديل موثوق) ====================
     function drawManualOwl(expression = 'normal') {
         const canvas = document.getElementById('riveCanvas');
         if (!canvas) return;
@@ -332,34 +342,16 @@
         }
     }
 
-    // ==================== دالة التحكم بالشخصية (تدعم Rive واليدوي) ====================
-    window.triggerRiveAction = (action) => {
+    // دالة موحدة للتحكم في مظهر الشخصية (بما في ذلك الأيقونة العاطفية)
+    function applyCharacterReaction(action, emotion) {
         if (!effectsEnabled) return;
-        // محاولة استخدام Rive إذا كان موجوداً ولديه مدخلات
+        // تحديث البومة اليدوية (أو Rive إذا كان موجوداً)
         if (riveInstance && riveInputs) {
-            // البحث عن مدخل منطقي (Boolean) أو مشغل (Trigger) مناسب
+            // محاولة استخدام Rive (اختياري)
             let input = riveInputs.find(i => i.name.toLowerCase().includes(action));
-            if (input) {
-                if (input.type === rive.StateMachineInputType.Trigger) {
-                    input.fire();
-                } else if (input.type === rive.StateMachineInputType.Boolean) {
-                    input.value = true;
-                    setTimeout(() => { if (input) input.value = false; }, 500);
-                } else {
-                    // محاولة استخدام أي مدخل منطقي كبديل
-                    let boolInput = riveInputs.find(i => i.type === rive.StateMachineInputType.Boolean);
-                    if (boolInput) {
-                        boolInput.value = true;
-                        setTimeout(() => { if (boolInput) boolInput.value = false; }, 500);
-                    }
-                }
-            } else {
-                // محاولة استخدام أول مدخل منطقي كإيماءة عامة
-                let boolInput = riveInputs.find(i => i.type === rive.StateMachineInputType.Boolean);
-                if (boolInput) {
-                    boolInput.value = true;
-                    setTimeout(() => { if (boolInput) boolInput.value = false; }, 500);
-                }
+            if (input && input.type === rive.StateMachineInputType.Boolean) {
+                input.value = true;
+                setTimeout(() => { if (input) input.value = false; }, 500);
             }
         } else {
             // البديل اليدوي
@@ -368,7 +360,17 @@
             else if (action === 'nod') drawManualOwl('nod');
             else drawManualOwl('normal');
         }
-    };
+        // تحديث أيقونة الحالة المزاجية بناءً على المشاعر
+        if (emotion === 'happy') {
+            aiMoodIcon.innerHTML = '😊';
+            aiMoodIcon.style.transform = 'scale(1.2)';
+            setTimeout(() => aiMoodIcon.style.transform = 'scale(1)', 300);
+        } else if (emotion === 'thinking') {
+            aiMoodIcon.innerHTML = '🤔';
+        } else if (emotion === 'neutral') {
+            aiMoodIcon.innerHTML = '👍';
+        }
+    }
 
     function showSpeechBubble(message, duration = 3000) {
         if (!effectsEnabled) return;
@@ -377,50 +379,84 @@
         setTimeout(() => speechBubbleDiv.classList.remove('visible'), duration);
     }
 
-    // ==================== تهيئة Rive Canvas ====================
+    // دالة ذكية لجلب الحالة المزاجية من Gemini API بناءً على سياق المحادثة
+    async function fetchAIMood(conversationContext, lastResponse) {
+        if (!effectsEnabled) return;
+        const moodIcon = aiMoodIcon;
+        moodIcon.innerHTML = '⏳';
+        try {
+            const response = await axios.post(
+                `https://generativelanguage.googleapis.com/v1beta/models/${modelSelect.value}:generateContent?key=${apiKeyInput.value.trim()}`,
+                {
+                    contents: [{
+                        parts: [{
+                            text: `أنت محلل مشاعر متخصص في الشخصيات الكرتونية. بناءً على سياق المحادثة التالي ورد المساعد الأخير، قم بتحديد الحالة المزاجية الأكثر ملاءمة لشخصية كرتونية (معلم لطيف) من بين ثلاث حالات فقط: "happy" (سعيد)، "thinking" (مفكر)، أو "neutral" (محايد). أخرج الكلمة الإنجليزية فقط، بدون أي جمل إضافية.
+
+                السياق:
+                ${conversationContext}
+                
+                الرد الأخير:
+                ${lastResponse}
+                
+                الحالة المزاجية المناسبة:`
+                        }]
+                    }],
+                    generationConfig: { temperature: 0.2, maxOutputTokens: 10 }
+                },
+                { headers: { "Content-Type": "application/json" } }
+            );
+            let mood = response.data.candidates[0].content.parts[0].text.trim().toLowerCase();
+            if (mood.includes('happy')) {
+                moodIcon.innerHTML = '😊';
+                moodIcon.style.transform = 'scale(1.2)';
+                setTimeout(() => moodIcon.style.transform = 'scale(1)', 200);
+            } else if (mood.includes('thinking')) {
+                moodIcon.innerHTML = '🤔';
+            } else {
+                moodIcon.innerHTML = '👍';
+            }
+        } catch (error) {
+            console.error("فشل في جلب الحالة المزاجية:", error);
+            moodIcon.innerHTML = '🤖';
+        }
+    }
+
+    // ==================== تهيئة Rive (اختيارية - إن وجد الملف) ====================
     function initRive() {
         const canvas = document.getElementById('riveCanvas');
         if (!canvas) return;
-        // TODO: استبدل 'avatar.riv' بملف شخصية Rive حقيقي من مجتمع Rive
-        // يمكنك تنزيل ملف مجاني من https://rive.app/community
-        riveInstance = new rive.Rive({
-            src: 'avatar.riv',   // ضع ملف الشخصية في نفس المجلد
-            canvas: canvas,
-            autoplay: true,
-            artboard: 'Artboard',
-            stateMachines: 'State Machine 1',
-            onLoad: () => {
-                console.log('✅ تم تحميل شخصية Rive بنجاح');
-                canvas.style.width = '120px';
-                canvas.style.height = '120px';
-                const inputs = riveInstance.stateMachineInputs('State Machine 1');
-                if (inputs) riveInputs = inputs;
-                riveInstance.play();
-            },
-            onError: (err) => {
-                console.warn('⚠️ فشل تحميل Rive، سيتم استخدام البديل اليدوي', err);
-                riveInstance = null;
-                drawManualOwl('normal');
-            }
-        });
+        fetch('avatar.riv', { method: 'HEAD' })
+            .then(res => {
+                if (res.ok) {
+                    riveInstance = new rive.Rive({
+                        src: 'avatar.riv',
+                        canvas: canvas,
+                        autoplay: true,
+                        artboard: 'Artboard',
+                        stateMachines: 'State Machine 1',
+                        onLoad: () => {
+                            console.log('✅ Rive loaded');
+                            canvas.style.width = '120px';
+                            canvas.style.height = '120px';
+                            const inputs = riveInstance.stateMachineInputs('State Machine 1');
+                            if (inputs) riveInputs = inputs;
+                            riveInstance.play();
+                        },
+                        onError: (err) => {
+                            console.warn('⚠️ Rive error, using manual drawing', err);
+                            riveInstance = null;
+                            drawManualOwl('normal');
+                        }
+                    });
+                } else {
+                    drawManualOwl('normal');
+                }
+            })
+            .catch(() => drawManualOwl('normal'));
     }
+    initRive();
 
-    // محاولة تحميل Rive، وإذا فشل أو لم يتم العثور على ملف، استخدم البديل اليدوي فوراً
-    fetch('avatar.riv', { method: 'HEAD' })
-        .then(response => {
-            if (response.ok) {
-                initRive();
-            } else {
-                console.log('ℹ️ ملف avatar.riv غير موجود، استخدام البديل اليدوي');
-                drawManualOwl('normal');
-            }
-        })
-        .catch(() => {
-            console.log('ℹ️ ملف avatar.riv غير موجود، استخدام البديل اليدوي');
-            drawManualOwl('normal');
-        });
-
-    // ==================== عداد الرصيد والترجمات ====================
+    // ==================== عداد الرصيد والترجمات (كما هي من النسخة الأصلية) ====================
     function updateCreditDisplay() {
         const remaining = Math.max(0, MAX_REQUESTS_PER_MINUTE - requestCount);
         const lang = languageSelect.value;
@@ -434,6 +470,7 @@
     function incrementRequestCount() { requestCount++; updateCreditDisplay(); }
     settingsToggle.addEventListener('click', () => { settingsPanel.classList.toggle('visible'); });
 
+    // الترجمات (نفس المحتوى الأصلي مع اختصار بسيط)
     const translations = {
         ar: { mainTitle: "🧑‍🏫 دليل الواجب", subTitle: "لا نعطيك الإجابة، نعلمك كيف تفكر!", welcome: "مرحباً ابني، اكتب أو صوّر المسألة التي صعُبت عليك في دروسك وسأدلك كيف تحلها", questionPlaceholder: "اكتب سؤالك هنا (رياضيات، علوم، تاريخ، لغة ...)", customFile: "📸 اختر صورة", startBtn: "🔍 ابدأ المحادثة", resetBtn: "🔄 بداية جديدة", studentAnswerPlaceholder: "اكتب إجابتك هنا...", sendBtn: "إرسال إجابتي", typing: "المدرس يكتب...", error: "خطأ", ocrStart: "🖼️ جاري استخراج النص من الصورة...", ocrProgress: "🖼️ التعرف على النص: ", ocrSuccess: "✅ تم استخراج النص بنجاح", ocrFail: "❌ فشل استخراج النص", error429: "لقد تجاوزت الحد المسموح من الطلبات. انتظر قليلاً.", error403: "المفتاح غير صالح. تأكد من صحة المفتاح.", noApiKey: "❌ الرجاء إدخال مفتاح API", noQuestion: "❌ الرجاء كتابة سؤال أو اختيار صورة", noAnswer: "الرجاء كتابة إجابتك أولاً.", helpLink: "📘 ❓ دليل الاستخدام (للأهل)", donateLink: "💖 دعم التطبيق (تبرع)" },
         en: { mainTitle: "🧑‍🏫 Homework Guide", subTitle: "We don't give you the answer, we teach you how to think!", welcome: "Hello my child, write or take a picture...", questionPlaceholder: "Write your question here...", customFile: "📸 Choose image", startBtn: "🔍 Start conversation", resetBtn: "🔄 New start", studentAnswerPlaceholder: "Write your answer here...", sendBtn: "Send my answer", typing: "Teacher is typing...", error: "Error", ocrStart: "🖼️ Extracting text...", ocrProgress: "🖼️ Recognizing: ", ocrSuccess: "✅ Success", ocrFail: "❌ Failed", error429: "Request limit exceeded", error403: "Invalid API key", noApiKey: "❌ Enter API key", noQuestion: "❌ Write a question or choose image", noAnswer: "Please write your answer", helpLink: "📘❓ User guide", donateLink: "💖 Support" },
@@ -471,7 +508,6 @@
         });
     }
 
-    // ==================== SVG للمعلم والطالب ====================
     const teacherSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="25" fill="#FFB6C1"/><circle cx="35" cy="35" r="4" fill="black"/><circle cx="65" cy="35" r="4" fill="black"/><path d="M40 50 Q50 60,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="65" width="20" height="25" fill="#4169E1" rx="5"/><circle cx="45" cy="90" r="6" fill="#8B4513"/><circle cx="55" cy="90" r="6" fill="#8B4513"/><rect x="25" y="55" width="50" height="8" fill="#CD853F" rx="4"/></svg>`;
     const studentSVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="22" fill="#FFD700"/><circle cx="38" cy="35" r="4" fill="black"/><circle cx="62" cy="35" r="4" fill="black"/><path d="M40 50 Q50 58,60 50" stroke="black" stroke-width="3" fill="none"/><rect x="40" y="62" width="20" height="25" fill="#32CD32" rx="5"/><circle cx="45" cy="87" r="6" fill="#8B4513"/><circle cx="55" cy="87" r="6" fill="#8B4513"/><rect x="25" y="52" width="50" height="6" fill="#CD853F" rx="3"/><path d="M30 20 L45 5 L55 5 L70 20" fill="#FF8C00" opacity="0.6"/></svg>`;
 
@@ -509,6 +545,7 @@
         imageInput.value = '';
         ocrStatus.innerText = '';
         hideTip();
+        aiMoodIcon.innerHTML = '🤖';
     }
 
     async function startNewQuestion() {
@@ -531,7 +568,10 @@
         currentQuestion = question;
         hideTip();
         addMessage(question, 'student');
-        if (effectsEnabled) { window.triggerRiveAction('thinking'); showSpeechBubble('دعني أفكر في سؤالك...', 2000); }
+        if (effectsEnabled) {
+            applyCharacterReaction('thinking', 'thinking');
+            showSpeechBubble('دعني أفكر في سؤالك...', 2000);
+        }
         await sendToAI(question, true, lang);
     }
 
@@ -541,7 +581,10 @@
         if (!answer) { alert(t.noAnswer); return; }
         addMessage(answer, 'student');
         studentAnswer.value = '';
-        if (effectsEnabled) { window.triggerRiveAction('nod'); showSpeechBubble('أحسنت المحاولة! استمر', 1500); }
+        if (effectsEnabled) {
+            applyCharacterReaction('nod', 'neutral');
+            showSpeechBubble('أحسنت المحاولة! استمر', 1500);
+        }
         await sendToAI(answer, false, languageSelect.value);
     }
 
@@ -585,6 +628,17 @@
             let answer = response.data.candidates[0].content.parts[0].text;
             const displayAnswer = answer.replace('[تم الحل]', '');
             addMessage(displayAnswer, 'teacher');
+            
+            // بناء نص المحادثة لجلب الحالة المزاجية الذكية
+            let conversationText = '';
+            conversationHistory.forEach(msg => {
+                conversationText += `${msg.role}: ${msg.content}\n`;
+            });
+            conversationText += `طالب: ${userInput}\nمدرس: ${answer}\n`;
+            
+            // جلب الحالة المزاجية من Gemini API (غير متزامن، لا ننتظر الرد)
+            fetchAIMood(conversationText, answer);
+            
             if (isFirstMessage) {
                 conversationHistory.push({ role: 'طالب', content: currentQuestion });
                 conversationHistory.push({ role: 'مدرس', content: answer });
@@ -594,10 +648,12 @@
             }
             if (answer.includes('[تم الحل]')) {
                 showRandomTip();
-                if (effectsEnabled) { window.triggerRiveAction('happy'); showSpeechBubble('🎉 أحسنت! لقد حللت السؤال بنجاح! 🎉', 4000); }
+                if (effectsEnabled) {
+                    applyCharacterReaction('happy', 'happy');
+                    showSpeechBubble('🎉 أحسنت! لقد حللت السؤال بنجاح! 🎉', 4000);
+                }
             } else {
                 hideTip();
-                if (!isFirstMessage && effectsEnabled) { window.triggerRiveAction('nod'); showSpeechBubble('حاول مجدداً، أنت قريب!', 2000); }
             }
         } catch (error) {
             if (typingMsg.parentNode) messagesDiv.removeChild(typingMsg);
@@ -613,7 +669,7 @@
         }
     }
 
-    // ==================== اهتزاز زر رفع الصورة ====================
+    // ==================== اهتزاز زر رفع الصورة بشكل دوري ====================
     function startShake() { if(effectsEnabled){ const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.add('shake'); } }
     function stopShake() { const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.remove('shake'); }
     setInterval(() => { if(effectsEnabled && !startBtn.disabled) { startShake(); setTimeout(() => stopShake(), 1000); } }, 10000);
@@ -630,6 +686,7 @@
             document.body.classList.remove('animations-enabled');
             stopShake();
             speechBubbleDiv.classList.remove('visible');
+            // لا نغير أيقونة الحالة المزاجية
         }
     });
     toggleEffectsBtn.click();
