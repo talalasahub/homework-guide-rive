@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>دليل الواجب - المدرس الذكي (Impossible UI)</title>
+    <title>دليل الواجب - المدرس الذكي (Impossible UI with Rive)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
@@ -27,6 +27,7 @@
             margin: 0; padding: 10px; text-align: center; min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
         }
+        /* خلفية متحركة */
         body.animations-enabled {
             background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
             animation: waveBackground 6s ease infinite;
@@ -61,6 +62,7 @@
         button:hover { background: var(--dark-green); transform: translateY(-2px); }
         button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         #resetBtn { background-color: var(--info-blue); }
+        /* اهتزاز الزر */
         .shake { animation: shake 0.5s ease-in-out infinite; }
         @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } 100% { transform: translateX(0); } }
         .chat-box { margin-top: 20px; padding: 15px; background: var(--light-gray); border-radius: 20px; text-align: right; min-height: 250px; border-right: 4px solid var(--primary-green); overflow-y: auto; max-height: 400px; }
@@ -74,11 +76,12 @@
         .tip-avatar { width: 70px; height: 70px; border-radius: 50%; background: #ffecb3; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .student-input-area { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .student-input-area input { flex: 1 1 200px; padding: 14px; border: 2px solid var(--primary-green); border-radius: 15px; font-size: 16px; background: var(--soft-white); min-width: 150px; }
+        /* منطقة الشخصية والفقاعة */
         .character-area {
             text-align: center;
             margin: 15px 0 10px;
         }
-        #riveCharacter {
+        #riveCanvas {
             width: 120px;
             height: 120px;
             margin: 0 auto;
@@ -133,7 +136,7 @@
         .footer-links a:hover { background: var(--light-green); transform: translateY(-2px); }
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-green); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 600px) { .container { padding: 15px; } .button-group button { width: 100%; } .student-input-area button { width: 100%; } #riveCharacter { width: 90px; height: 90px; } }
+        @media (max-width: 600px) { .container { padding: 15px; } .button-group button { width: 100%; } .student-input-area button { width: 100%; } #riveCanvas { width: 90px; height: 90px; } }
     </style>
 </head>
 <body>
@@ -185,9 +188,9 @@
         <div id="messages"></div>
     </div>
 
-    <!-- موقع الشخصية -->
+    <!-- الشخصية التفاعلية (Rive + بديل يدوي) -->
     <div class="character-area">
-        <canvas id="riveCharacter" width="120" height="120" style="width:120px; height:120px;"></canvas>
+        <canvas id="riveCanvas" width="120" height="120" style="width:120px; height:120px;"></canvas>
         <div id="speechBubble" class="speech-bubble"></div>
     </div>
 
@@ -209,11 +212,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.8/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.0/dist/tesseract.min.js"></script>
-<!-- محاولة تحميل Rive Canvas (إذا كان الملف موجوداً محلياً) -->
-<script src="rive.js" onerror="console.warn('⚠️ rive.js لم يتم تحميله - سيتم استخدام الرسم اليدوي فقط')"></script>
+<!-- مكتبة Rive Canvas -->
+<script src="https://unpkg.com/@rive-app/canvas@2.17.0"></script>
 
 <script>
-    // ==================== العناصر الأساسية ====================
+    // ==================== عناصر الصفحة الأساسية ====================
     const apiKeyInput = document.getElementById('apiKeyInput');
     const modelSelect = document.getElementById('modelSelect');
     const languageSelect = document.getElementById('languageSelect');
@@ -249,11 +252,11 @@
     let conversationHistory = [];
     let currentQuestion = '';
     let riveInstance = null;
-    let riveInput = null;
+    let riveInputs = null;
 
     // ==================== رسم البومة اليدوي (بديل قوي) ====================
     function drawManualOwl(expression = 'normal') {
-        const canvas = document.getElementById('riveCharacter');
+        const canvas = document.getElementById('riveCanvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         canvas.width = 120; canvas.height = 120;
@@ -287,7 +290,7 @@
             ctx.lineTo(68, 35);
             ctx.lineWidth = 3;
             ctx.stroke();
-            const elem = document.getElementById('riveCharacter');
+            const elem = document.getElementById('riveCanvas');
             elem.style.transform = 'rotate(-3deg)';
             setTimeout(() => elem.style.transform = '', 500);
         } else if (expression === 'happy') {
@@ -304,7 +307,7 @@
             ctx.moveTo(84, 32);
             ctx.lineTo(72, 31);
             ctx.stroke();
-            const elem = document.getElementById('riveCharacter');
+            const elem = document.getElementById('riveCanvas');
             elem.style.transform = 'translateY(-6px)';
             setTimeout(() => elem.style.transform = '', 400);
         } else if (expression === 'nod') {
@@ -312,7 +315,7 @@
             ctx.arc(45, 42, 4, 0, 2 * Math.PI);
             ctx.arc(75, 42, 4, 0, 2 * Math.PI);
             ctx.fill();
-            const elem = document.getElementById('riveCharacter');
+            const elem = document.getElementById('riveCanvas');
             elem.style.transform = 'rotate(6deg)';
             setTimeout(() => elem.style.transform = '', 200);
         } else {
@@ -329,15 +332,35 @@
         }
     }
 
-    // ==================== دالة التحكم بالشخصية (يدعم Rive واليدوي) ====================
-    window.updateCharacter = (action) => {
+    // ==================== دالة التحكم بالشخصية (تدعم Rive واليدوي) ====================
+    window.triggerRiveAction = (action) => {
         if (!effectsEnabled) return;
         // محاولة استخدام Rive إذا كان موجوداً ولديه مدخلات
-        if (riveInstance && riveInput) {
-            riveInput.value = true;
-            setTimeout(() => {
-                if (riveInput) riveInput.value = false;
-            }, 500);
+        if (riveInstance && riveInputs) {
+            // البحث عن مدخل منطقي (Boolean) أو مشغل (Trigger) مناسب
+            let input = riveInputs.find(i => i.name.toLowerCase().includes(action));
+            if (input) {
+                if (input.type === rive.StateMachineInputType.Trigger) {
+                    input.fire();
+                } else if (input.type === rive.StateMachineInputType.Boolean) {
+                    input.value = true;
+                    setTimeout(() => { if (input) input.value = false; }, 500);
+                } else {
+                    // محاولة استخدام أي مدخل منطقي كبديل
+                    let boolInput = riveInputs.find(i => i.type === rive.StateMachineInputType.Boolean);
+                    if (boolInput) {
+                        boolInput.value = true;
+                        setTimeout(() => { if (boolInput) boolInput.value = false; }, 500);
+                    }
+                }
+            } else {
+                // محاولة استخدام أول مدخل منطقي كإيماءة عامة
+                let boolInput = riveInputs.find(i => i.type === rive.StateMachineInputType.Boolean);
+                if (boolInput) {
+                    boolInput.value = true;
+                    setTimeout(() => { if (boolInput) boolInput.value = false; }, 500);
+                }
+            }
         } else {
             // البديل اليدوي
             if (action === 'thinking') drawManualOwl('thinking');
@@ -354,40 +377,48 @@
         setTimeout(() => speechBubbleDiv.classList.remove('visible'), duration);
     }
 
-    // ==================== تهيئة Rive (إذا تم تحميل المكتبة) ====================
-    if (typeof rive !== 'undefined') {
-        (function initRive() {
-            const canvas = document.getElementById('riveCharacter');
-            if (!canvas) return;
-            fetch('avatar.riv').catch(() => {}); // مجرد اختبار وجود الملف
-            riveInstance = new rive.Rive({
-                src: 'avatar.riv',
-                canvas: canvas,
-                autoplay: true,
-                artboard: 'Artboard',
-                stateMachines: 'State Machine 1',
-                onLoad: () => {
-                    console.log('✅ Rive loaded');
-                    canvas.style.width = '120px';
-                    canvas.style.height = '120px';
-                    const inputs = riveInstance.stateMachineInputs('State Machine 1');
-                    if (inputs && inputs.length) {
-                        riveInput = inputs.find(i => i.type === 'Boolean') || inputs[0];
-                        if (riveInput) console.log('✅ Rive input found:', riveInput.name);
-                    }
-                    riveInstance.play();
-                },
-                onError: (err) => {
-                    console.warn('⚠️ Rive error, using manual drawing', err);
-                    riveInstance = null;
-                    drawManualOwl('normal');
-                }
-            });
-        })();
-    } else {
-        console.log('ℹ️ Rive library not loaded, using manual drawing');
-        drawManualOwl('normal');
+    // ==================== تهيئة Rive Canvas ====================
+    function initRive() {
+        const canvas = document.getElementById('riveCanvas');
+        if (!canvas) return;
+        // TODO: استبدل 'avatar.riv' بملف شخصية Rive حقيقي من مجتمع Rive
+        // يمكنك تنزيل ملف مجاني من https://rive.app/community
+        riveInstance = new rive.Rive({
+            src: 'avatar.riv',   // ضع ملف الشخصية في نفس المجلد
+            canvas: canvas,
+            autoplay: true,
+            artboard: 'Artboard',
+            stateMachines: 'State Machine 1',
+            onLoad: () => {
+                console.log('✅ تم تحميل شخصية Rive بنجاح');
+                canvas.style.width = '120px';
+                canvas.style.height = '120px';
+                const inputs = riveInstance.stateMachineInputs('State Machine 1');
+                if (inputs) riveInputs = inputs;
+                riveInstance.play();
+            },
+            onError: (err) => {
+                console.warn('⚠️ فشل تحميل Rive، سيتم استخدام البديل اليدوي', err);
+                riveInstance = null;
+                drawManualOwl('normal');
+            }
+        });
     }
+
+    // محاولة تحميل Rive، وإذا فشل أو لم يتم العثور على ملف، استخدم البديل اليدوي فوراً
+    fetch('avatar.riv', { method: 'HEAD' })
+        .then(response => {
+            if (response.ok) {
+                initRive();
+            } else {
+                console.log('ℹ️ ملف avatar.riv غير موجود، استخدام البديل اليدوي');
+                drawManualOwl('normal');
+            }
+        })
+        .catch(() => {
+            console.log('ℹ️ ملف avatar.riv غير موجود، استخدام البديل اليدوي');
+            drawManualOwl('normal');
+        });
 
     // ==================== عداد الرصيد والترجمات ====================
     function updateCreditDisplay() {
@@ -427,7 +458,7 @@
         updateCreditDisplay();
     }
     languageSelect.addEventListener('change', updateUILanguage);
-    window.addEventListener('load', () => { updateUILanguage(); startCreditTimer(); drawManualOwl('normal'); });
+    window.addEventListener('load', () => { updateUILanguage(); startCreditTimer(); });
 
     // ==================== OCR ====================
     async function extractTextFromImage(file, langCode) {
@@ -500,7 +531,7 @@
         currentQuestion = question;
         hideTip();
         addMessage(question, 'student');
-        if (effectsEnabled) { window.updateCharacter('thinking'); showSpeechBubble('دعني أفكر في سؤالك...', 2000); }
+        if (effectsEnabled) { window.triggerRiveAction('thinking'); showSpeechBubble('دعني أفكر في سؤالك...', 2000); }
         await sendToAI(question, true, lang);
     }
 
@@ -510,7 +541,7 @@
         if (!answer) { alert(t.noAnswer); return; }
         addMessage(answer, 'student');
         studentAnswer.value = '';
-        if (effectsEnabled) { window.updateCharacter('nod'); showSpeechBubble('أحسنت المحاولة! استمر', 1500); }
+        if (effectsEnabled) { window.triggerRiveAction('nod'); showSpeechBubble('أحسنت المحاولة! استمر', 1500); }
         await sendToAI(answer, false, languageSelect.value);
     }
 
@@ -563,10 +594,10 @@
             }
             if (answer.includes('[تم الحل]')) {
                 showRandomTip();
-                if (effectsEnabled) { window.updateCharacter('happy'); showSpeechBubble('🎉 أحسنت! لقد حللت السؤال بنجاح! 🎉', 4000); }
+                if (effectsEnabled) { window.triggerRiveAction('happy'); showSpeechBubble('🎉 أحسنت! لقد حللت السؤال بنجاح! 🎉', 4000); }
             } else {
                 hideTip();
-                if (!isFirstMessage && effectsEnabled) { window.updateCharacter('nod'); showSpeechBubble('حاول مجدداً، أنت قريب!', 2000); }
+                if (!isFirstMessage && effectsEnabled) { window.triggerRiveAction('nod'); showSpeechBubble('حاول مجدداً، أنت قريب!', 2000); }
             }
         } catch (error) {
             if (typingMsg.parentNode) messagesDiv.removeChild(typingMsg);
@@ -582,7 +613,7 @@
         }
     }
 
-    // ==================== اهتزاز زر الصورة ====================
+    // ==================== اهتزاز زر رفع الصورة ====================
     function startShake() { if(effectsEnabled){ const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.add('shake'); } }
     function stopShake() { const btn = document.querySelector('.custom-file-upload'); if(btn) btn.classList.remove('shake'); }
     setInterval(() => { if(effectsEnabled && !startBtn.disabled) { startShake(); setTimeout(() => stopShake(), 1000); } }, 10000);
